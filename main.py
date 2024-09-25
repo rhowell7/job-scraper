@@ -223,7 +223,7 @@ def get_glassdoor_data_from_db(company_name):
         "company_size "
         "FROM glassdoor_data "
         "WHERE company = %s",
-        (job_info["company_name"],)
+        (job_info["company_name"],),
     )
     result = cursor.fetchone()
     if result:
