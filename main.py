@@ -1,4 +1,3 @@
-import json
 import requests
 from bs4 import BeautifulSoup
 import re
@@ -10,16 +9,19 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 import time
 from locations import allow_keywords, states_and_cities, exclude_keywords
+from dotenv import load_dotenv
+import os
 
 
-# Load API key and custom search engine (cx) from the config file
-with open("config.json") as config_file:
-    config = json.load(config_file)
-
-API_KEY = config["API_KEY"]
-SEARCH_ENGINE_ID = config["SEARCH_ENGINE_ID"]
-DB_PASS = config["DB_PASS"]
-DB_USER = config["DB_USER"]
+load_dotenv()
+# Load API key and custom search engine (cx) from Google
+API_KEY = os.getenv("API_KEY")
+SEARCH_ENGINE_ID = os.getenv("SEARCH_ENGINE_ID")
+# Load PostgresQL credentials from the .env file
+DB_HOST = os.getenv("DB_HOST")
+DB_NAME = os.getenv("DB_NAME")
+DB_USER = os.getenv("DB_USER")
+DB_PASS = os.getenv("DB_PASS")
 
 # Load the dictionary into a set for fast keyword lookups
 with open("/usr/share/dict/words") as f:
@@ -336,7 +338,7 @@ def scrape_glassdoor_data(company_name):
 if __name__ == "__main__":
     # Connect to PostgreSQL
     conn = psycopg2.connect(
-        dbname="job_scraper", user=DB_USER, password=DB_PASS, host="localhost"
+        dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST
     )
     cursor = conn.cursor()
 

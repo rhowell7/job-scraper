@@ -9,6 +9,11 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      DB_USER: fake_user
+      DB_PASS: fake_password
+      API_KEY: fake_api_key
+      SEARCH_ENGINE_ID: fake_search_engine_id
 
     steps:
     - name: Checkout code
