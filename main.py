@@ -24,7 +24,7 @@ DB_USER = os.getenv("DB_USER")
 DB_PASS = os.getenv("DB_PASS")
 
 # Load the dictionary into a set for fast keyword lookups
-with open("/usr/share/dict/words") as f:
+with open("dict/words") as f:
     dictionary = set(word.strip().lower() for word in f)
 
 
