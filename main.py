@@ -11,6 +11,7 @@ import time
 from locations import allow_keywords, states_and_cities, exclude_keywords
 from dotenv import load_dotenv
 import os
+from typing import Dict, Tuple, List, Optional
 
 
 load_dotenv()
@@ -45,7 +46,17 @@ preferences = {
 }
 
 
-def google_custom_search(query, num=3):
+def google_custom_search(query: str, num: int = 3) -> Optional[Dict]:
+    """
+    Perform a Google Custom Search API query and return the JSON response.
+
+    Args:
+        query (str): The search query to perform.
+        num (int): The number of results to return (default 3).
+
+    Returns:
+        Optional[Dict]: The JSON result from the API, or None if the request fails.
+    """
     url = "https://www.googleapis.com/customsearch/v1"
     params = {"q": query, "key": API_KEY, "cx": SEARCH_ENGINE_ID, "num": num}
     response = requests.get(url, params=params)
@@ -55,14 +66,32 @@ def google_custom_search(query, num=3):
         return None
 
 
-def normalize_url(url):
+def normalize_url(url: str) -> str:
+    """
+    Normalize the given URL by removing query parameters.
+
+    Args:
+        url (str): The URL to normalize.
+
+    Returns:
+        str: The normalized URL without query parameters.
+    """
     parsed = urlparse(url)
     # Reconstruct the URL without query parameters
     normalized = parsed._replace(query="")
     return urlunparse(normalized)
 
 
-def in_usa(location):
+def in_usa(location: str) -> bool:
+    """
+    Check if the given location is in the USA.
+
+    Args:
+        location (str): The location string.
+
+    Returns:
+        bool: True if the location is in the USA, False otherwise
+    """
     location = location.lower()
 
     delimiters = [",", "/", "-", "(", ")", " "]  # Split by space or no?
@@ -82,7 +111,16 @@ def in_usa(location):
     return True  # If no match is found, default to including the job
 
 
-def clean_text(text):
+def clean_text(text: str) -> str:
+    """
+    Clean up the given text by replacing non-breaking spaces and multiple newlines.
+
+    Args:
+        text (str): The text to clean up.
+
+    Returns:
+        str: The cleaned text.
+    """
     # Replace non-breaking space with a normal space
     text = text.replace("\xa0", " ")
     # Replace multiple newlines with a single newline
@@ -92,7 +130,16 @@ def clean_text(text):
     return text
 
 
-def extract_keywords(text):
+def extract_keywords(text: str) -> List[str]:
+    """
+    Extract keywords from the given text, excluding common English words.
+
+    Args:
+        text (str): The text to extract keywords from.
+
+    Returns:
+        List[str]: A list of unique keywords sorted alphabetically.
+    """
     words = re.findall(r"\b[a-zA-Z]{3,}\b", text)  # len>=3 to avoid "you'll"
     keyword_dict = {}
     for word in words:
@@ -106,7 +153,17 @@ def extract_keywords(text):
     return sorted(keyword_dict.values(), key=lambda word: word.lower())
 
 
-def extract_job_info(url):
+def extract_job_info(url: str) -> Optional[Dict]:
+    """
+    Extract job information from the given URL.
+
+    Args:
+        url (str): The URL of the job posting.
+
+    Returns:
+        Optional[Dict]: A dictionary containing the job information, or None
+                        if the extraction fails.
+    """
     job_info = {}
     try:
         response = requests.get(url)
@@ -180,7 +237,18 @@ def extract_job_info(url):
         return None
 
 
-def score_job(title, description):
+def score_job(title: str, description: str) -> Tuple[int, List[str]]:
+    """
+    Score the job based on the title, description, and user preferences.
+
+    Args:
+        title (str): The job title.
+        description (str): The job description.
+
+    Returns:
+        Tuple[int, List[str]]: A tuple containing the score and a list of
+                               preference hits.
+    """
     score = 0
     title = title.lower()
     description = description.lower()
@@ -197,7 +265,17 @@ def score_job(title, description):
     return score, preference_hits
 
 
-def extract_salary(description):
+def extract_salary(description: str) -> Tuple[Optional[int], Optional[int]]:
+    """
+    Extract the salary range from the given job description.
+
+    Args:
+        description (str): The job description text.
+
+    Returns:
+        Tuple[Optional[int], Optional[int]]: A tuple containing the minimum
+        and maximum salary values, or (None, None) if no salary is found.
+    """
     # Find the first two salary values after the '$' symbols
     salary_pattern = re.compile(r"\$\s?(\d{1,3}(?:,\d{3})*)")
     matches = salary_pattern.findall(description)
@@ -216,9 +294,16 @@ def extract_salary(description):
     return None, None
 
 
-def get_glassdoor_data_from_db(company_name):
+def get_glassdoor_data_from_db(company_name: str) -> Optional[Dict]:
     """
-    Check if Glassdoor data for the given company exists in the database.
+    Get Glassdoor data from the database for the given company, if it exists.
+
+    Args:
+        company_name (str): The name of the company to search for.
+
+    Returns:
+        Optional[Dict]: A dictionary containing the Glassdoor data, or None if
+                        no data is found.
     """
     cursor.execute(
         "SELECT glassdoor_rating, glassdoor_link, glassdoor_num_reviews, "
@@ -238,9 +323,16 @@ def get_glassdoor_data_from_db(company_name):
     return None
 
 
-def save_glassdoor_data_to_db(company_name, glassdoor_data):
+def save_glassdoor_data_to_db(company_name: str, glassdoor_data: Dict):
     """
-    Save Glassdoor data to the database.
+    Save the Glassdoor data for the given company to the database.
+
+    Args:
+        company_name (str): The name of the company.
+        glassdoor_data (Dict): A dictionary containing the Glassdoor data.
+
+    Returns:
+        None
     """
     cursor.execute(
         "INSERT INTO glassdoor_data (company, glassdoor_rating, glassdoor_link, "
@@ -257,9 +349,16 @@ def save_glassdoor_data_to_db(company_name, glassdoor_data):
     conn.commit()
 
 
-def scrape_glassdoor_data(company_name):
+def scrape_glassdoor_data(company_name: str) -> Dict:
     """
-    Scrape Glassdoor data for the given company using Selenium.
+    Scrape Glassdoor data for the given company name.
+
+    Args:
+        company_name (str): The name of the company to search for.
+
+    Returns:
+        Dict: A dictionary containing the Glassdoor data.
+
     """
     # Set up Chrome options to run headless
     chrome_options = Options()
@@ -336,6 +435,9 @@ def scrape_glassdoor_data(company_name):
 
 
 if __name__ == "__main__":
+    """
+    Main entry point of the script.
+    """
     # Connect to PostgreSQL
     conn = psycopg2.connect(
         dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST
