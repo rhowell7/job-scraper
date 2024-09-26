@@ -1,5 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
+import csv
 import re
 from urllib.parse import urlparse, urlunparse
 import psycopg2
@@ -434,6 +435,24 @@ def scrape_glassdoor_data(company_name: str) -> Dict:
         driver.quit()
 
 
+def export_table_to_csv(cursor, table_name: str, csv_file_path: str):
+    """
+    Export a PostgreSQL table to a CSV file.
+
+    Args:
+        cursor: The cursor object for the database connection.
+        table_name (str): The name of the table to export.
+        csv_file_path (str): The file path to save the CSV file.
+    """
+    try:
+        query = f"COPY {table_name} TO STDOUT WITH CSV HEADER"
+        with open(csv_file_path, "w", newline="") as csv_file:
+            cursor.copy_expert(query, csv_file)
+        print(f"Table '{table_name}' successfully exported to {csv_file_path}")
+    except Exception as e:
+        print(f"Error exporting table '{table_name}': {e}")
+
+
 if __name__ == "__main__":
     """
     Main entry point of the script.
@@ -553,6 +572,16 @@ if __name__ == "__main__":
             )
             conn.commit()
             print(f"  417: Job added to the database: {job_info['job_title']}")
+
+    # Export the jobs table to a CSV file with the date in the filename
+    export_table_to_csv(
+        cursor, "jobs", f"result/{time.strftime('%Y-%m-%d')}_jobs.csv"
+    )
+    export_table_to_csv(
+        cursor,
+        "foreign_jobs",
+        f"result/{time.strftime('%Y-%m-%d')}_foreign_jobs.csv",
+    )
 
     cursor.close()
     conn.close()

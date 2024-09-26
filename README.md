@@ -8,7 +8,7 @@ Greenhouse.io and Lever.co and aggregate them into a single, searchable database
 - Scrape job listings from Greenhouse.io and Lever.co
 - Store job listings in a database
 - Search and filter job listings by keywords, preferences, and more
-- TODO: Export job listings to CSV
+- Export job listings to CSV in `result/` directory
 
 ## Installation
 

@@ -7,3 +7,4 @@ venv/
 .coverage
 *.egg-info/
 .tox/
+result/*.csv
