@@ -1,6 +1,7 @@
 beautifulsoup4==4.12.3
 black==24.8.0
 flake8==7.1.1
+pip_audit==2.7.3
 psycopg2-binary==2.9.9
 pytest==8.3.3
 pytest_cov==5.0.0
