@@ -3,6 +3,7 @@ black==24.8.0
 flake8==7.1.1
 psycopg2-binary==2.9.9
 pytest==8.3.3
+pytest_cov==5.0.0
 python-dotenv==1.0.1
 requests==2.32.3
 selenium==4.24.0

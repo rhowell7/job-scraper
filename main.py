@@ -1,6 +1,5 @@
 import requests
 from bs4 import BeautifulSoup
-import csv
 import re
 from urllib.parse import urlparse, urlunparse
 import psycopg2

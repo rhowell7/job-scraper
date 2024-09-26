@@ -19,3 +19,8 @@ def test_uk():
 def test_apac():
     result = in_usa("Remote, APAC")
     assert result is False
+
+
+def test_unknown():
+    result = in_usa("Neverheardofit")
+    assert result is True
