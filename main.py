@@ -1,24 +1,38 @@
+import logging
+import os
+import re
+import time
+from typing import Dict, Tuple, List, Optional
+from urllib.parse import urlparse, urlunparse
+
+import psycopg2
 import requests
 from bs4 import BeautifulSoup
-import re
-from urllib.parse import urlparse, urlunparse
-import psycopg2
+from dotenv import load_dotenv
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
-import time
+from selenium.webdriver.chrome.service import Service
+
 from locations import allow_keywords, states_and_cities, exclude_keywords
-from dotenv import load_dotenv
-import os
-from typing import Dict, Tuple, List, Optional
 
 
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.FileHandler(
+            "logs/job_scraper.log", mode="a", encoding=None, delay=False
+        ),
+        logging.StreamHandler(),
+    ],
+)
+
+# Load environment variables from the .env file
 load_dotenv()
-# Load API key and custom search engine (cx) from Google
 API_KEY = os.getenv("API_KEY")
 SEARCH_ENGINE_ID = os.getenv("SEARCH_ENGINE_ID")
-# Load PostgresQL credentials from the .env file
 DB_HOST = os.getenv("DB_HOST")
 DB_NAME = os.getenv("DB_NAME")
 DB_USER = os.getenv("DB_USER")
@@ -27,7 +41,6 @@ DB_PASS = os.getenv("DB_PASS")
 # Load the dictionary into a set for fast keyword lookups
 with open("dict/words") as f:
     dictionary = set(word.strip().lower() for word in f)
-
 
 # Preferences for scoring (positive/negative keywords)
 preferences = {
@@ -63,6 +76,9 @@ def google_custom_search(query: str, num: int = 3) -> Optional[Dict]:
     if response.status_code == 200:
         return response.json()
     else:
+        logging.error(
+            f"  Google Custom Search API request failed: { response.status_code }"
+        )
         return None
 
 
@@ -203,7 +219,7 @@ def extract_job_info(url: str) -> Optional[Dict]:
                         raw_text = job_description_div.get_text(separator="\n")
                         job_info["description"] = clean_text(raw_text)
                 else:
-                    print(f"  177: Failed to extract job details from {url}")
+                    logging.error(f"  Failed to extract job details from {url}")
                     return None
 
             # Lever job board
@@ -230,10 +246,12 @@ def extract_job_info(url: str) -> Optional[Dict]:
             return job_info
 
         else:
-            print(f"  203: Failed to retrieve page {url}: {response.status_code}")
+            logging.error(
+                f"  Failed to retrieve page {url}: {response.status_code}"
+            )
             return None
     except requests.exceptions.RequestException as e:
-        print(f"  206: HTTP request failed: {e}")
+        logging.error(f"  HTTP request failed: {e}")
         return None
 
 
@@ -447,9 +465,11 @@ def export_table_to_csv(cursor, table_name: str, csv_file_path: str):
         query = f"COPY {table_name} TO STDOUT WITH CSV HEADER"
         with open(csv_file_path, "w", newline="") as csv_file:
             cursor.copy_expert(query, csv_file)
-        print(f"Table '{table_name}' successfully exported to {csv_file_path}")
+        logging.info(
+            f"Table '{table_name}' successfully exported to {csv_file_path}"
+        )
     except Exception as e:
-        print(f"Error exporting table '{table_name}': {e}")
+        logging.error(f"Error exporting table '{table_name}': {e}")
 
 
 if __name__ == "__main__":
@@ -481,16 +501,16 @@ if __name__ == "__main__":
 
     if results:
         for item in results.get("items", []):
-            print("Processing URL:", item["link"])
+            logging.info(f"Processing URL: {item['link']}")
             title = item["title"]
             url = normalize_url(item["link"])
 
             # Skip duplicate URLs
             if url in existing_urls:
-                print(f"  370: Skipping duplicate US job: {title}")
+                logging.info(f"  Skipping duplicate US job: {title}")
                 continue
             elif url in foreign_urls:
-                print(f"  373: Skipping duplicate foreign job: {title}")
+                logging.info(f"  Skipping duplicate foreign job: {title}")
                 continue
 
             job_info = extract_job_info(url)
@@ -499,16 +519,19 @@ if __name__ == "__main__":
                 or not job_info["job_title"]
                 or not job_info["company_name"]
             ):
-                print(f"  378: Failed to extract job and company from {url}")
+                logging.error(f"  Failed to extract job and company from {url}")
                 continue
 
             # Skip jobs outside the USA
             if not in_usa(job_info["location"]):
-                print("  383: Skipping job outside the USA:")
-                print(f"    Location: {job_info['location']}")
-                print(f"    URL: {url}")
-                print(f"    Title: {job_info['job_title']}")
-                print(f"    Company: {job_info['company_name']}")
+                logging.info(
+                    f"  Skipping job outside the USA: {job_info['job_title']}"
+                )
+                logging.info(f"    Location: {job_info['location']}")
+                logging.info(f"    URL: {url}")
+                logging.info(f"    Title: {job_info['job_title']}")
+                logging.info(f"    Company: {job_info['company_name']}")
+
                 cursor.execute(
                     "INSERT INTO foreign_jobs (url, company, job_title, "
                     "location, date_first_seen) "
@@ -534,11 +557,11 @@ if __name__ == "__main__":
             glassdoor_data = get_glassdoor_data_from_db(company)
 
             if glassdoor_data is None:
-                print(f"  405: Scraping Glassdoor data for {company}")
+                logging.info(f"  Scraping Glassdoor data for {company}")
                 glassdoor_data = scrape_glassdoor_data(company)
                 save_glassdoor_data_to_db(job_info["company_name"], glassdoor_data)
             else:
-                print(f"  409: Using cached Glassdoor data for {company}")
+                logging.info(f"  Using cached Glassdoor data for {company}")
 
             cursor.execute(
                 """
@@ -570,16 +593,16 @@ if __name__ == "__main__":
                 ),
             )
             conn.commit()
-            print(f"  417: Job added to the database: {job_info['job_title']}")
+            logging.info(f"  Job added to the database: {job_info['job_title']}")
 
     # Export the jobs table to a CSV file with the date in the filename
     export_table_to_csv(
-        cursor, "jobs", f"result/{time.strftime('%Y-%m-%d')}_jobs.csv"
+        cursor, "jobs", f"results/{time.strftime('%Y-%m-%d-%H:%M')}_jobs.csv"
     )
     export_table_to_csv(
         cursor,
         "foreign_jobs",
-        f"result/{time.strftime('%Y-%m-%d')}_foreign_jobs.csv",
+        f"results/{time.strftime('%Y-%m-%d-%H:%M')}_foreign_jobs.csv",
     )
 
     cursor.close()

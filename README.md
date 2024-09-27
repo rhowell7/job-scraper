@@ -3,12 +3,14 @@
 Job Scraper is a Python-based application designed to scrape job listings from
 Greenhouse.io and Lever.co and aggregate them into a single, searchable database.
 
+
 ## Features
 
 - Scrape job listings from Greenhouse.io and Lever.co
 - Store job listings in a database
 - Search and filter job listings by keywords, preferences, and more
 - Export job listings to CSV in `result/` directory
+
 
 ## Installation
 
@@ -81,42 +83,62 @@ Run the application:
 python main.py
 ```
 
+You can watch the live logs in another terminal:
+```sh
+tail -f logs/job_scraper.log
+```
+
+Or, view that file after the run to see which URLs were processed.
+
 ### View the results
 
 The script should create three tables in the database: `jobs`, `foreign_jobs`, and `glassdoor_data`.
 You can view the results by connecting to the database:
 ```sh
-sudo -u postgres psql
-postgres=# \c job_scraper
-job_scraper=# SELECT * FROM jobs;
-job_scraper=# SELECT * FROM foreign_jobs;
-job_scraper=# SELECT * FROM glassdoor_data;
+$ sudo -u postgres psql  # log in as the postgres user (admin)
+postgres=> \c job_scraper  # connect to the job_scraper database
+# -OR- #
+$ psql -h localhost -U <db_user> -d job_scraper  # log in as user
+job_scraper=> SELECT * FROM jobs;
+job_scraper=> SELECT * FROM foreign_jobs;
+job_scraper=> SELECT * FROM glassdoor_data;
 ```
+
+The results will also be available in CSV files in the `results` folder.
+
 
 ## Testing
 
-To run the tests, install `tox`:
+To run the tests, first install the required dependencies:
 ```sh
-pip install tox
+source venv/bin/activate  # if not already activated
+pip install -r requirements.txt
 ```
 
-Run the tests:
+Then, run the tests with `tox`:
 ```sh
 tox
 ```
 
 Or, run the tests one by one after activating the virtual environment:
 ```sh
-source venv/bin/activate
+source venv/bin/activate  # if not already activated
 pytest
-flake8 --exclude .tox,.git,venv/ .
+flake8
 black --check .
 ```
+
+_Notes:_
+- Set the mandatory minimum test coverage in `pytest.ini`
+- Set the line length for `black` in `pyproject.toml`
+- Set `flake8`'s line-length, ignores, and excludes in `.flake8`
+
 
 ## Contributing
 
 Contributions are welcome! Please open an issue or submit a pull request.
 Please make sure `tox` passes before submitting a pull request.
+
 
 ## License
 

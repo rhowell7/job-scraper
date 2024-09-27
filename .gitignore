@@ -2,10 +2,10 @@ config.json
 __pycache__/
 .env
 venv/
-*.log
+logs/*.log
 notes.txt
 .pytest_cache/
 .coverage
 *.egg-info/
 .tox/
-result/*.csv
+results/*.csv
