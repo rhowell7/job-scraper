@@ -3,6 +3,7 @@ __pycache__/
 .env
 venv/
 *.log
+notes.txt
 .pytest_cache/
 .coverage
 *.egg-info/
