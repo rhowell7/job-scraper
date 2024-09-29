@@ -129,9 +129,11 @@ black --check .
 ```
 
 _Notes:_
-- Set the mandatory minimum test coverage in `pytest.ini`
-- Set the line length for `black` in `pyproject.toml`
+- Set the mandatory minimum test coverage in `pyproject.toml` under `[tool.pytest.ini_options]`
+- Set the line length for `black` in `pyproject.toml` under `[tool.black]`
 - Set `flake8`'s line-length, ignores, and excludes in `.flake8`
+- `setup.py` is ignored in the coverage report as defined in `.coveragerc`
+
 
 
 ## Contributing
