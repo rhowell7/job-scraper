@@ -1,110 +1,68 @@
 # Job Scraper
 
-Job Scraper is a Python-based application designed to scrape job listings from
-Greenhouse.io and Lever.co and aggregate them into a single, searchable database.
+Job Scraper is a lightweight Python-based tool designed to scrape job listings from Greenhouse.io and Lever.co and aggregate them into a single, searchable database. Users can clone the repo and run the scraper locally, collecting and contributing job data.
 
 
 ## Features
 
-- Scrape job listings from Greenhouse.io and Lever.co
-- Store job listings in a database
-- Search and filter job listings by keywords, preferences, and more
-- Export job listings to CSV in `result/` directory
+- Scrape jobs from sources like Lever and Greenhouse.
+- Save job information into CSV file(s).
+- Supports user-defined preferences for ranking jobs (e.g., prioritizing remote jobs or specific technologies like Python).
+- Glassdoor data (e.g., company ratings) collected and saved in a shared CSV file for reuse.
+- Lightweight and runs locally.
+- Encourages users to contribute to job data by submitting pull requests with additional Glassdoor data they've scraped.
 
 
-## Installation
+## Getting Started
+
+### Prerequisites
+
+- Python 3.7+
+- Required Python packages (see `requirements.txt`)
+
+### Installation
 
 1. Clone the repository:
     ```sh
     git clone https://github.com/rhowell7/job-scraper.git
-    ```
-2. Navigate to the project directory:
-    ```sh
     cd job-scraper
     ```
-3. Create and activate a virtual environment:
+2. Set up a virtual environment and install dependencies:
     ```sh
     python -m venv venv
     source venv/bin/activate  # `deactivate` when finished
-    ```
-4. Install the required dependencies:
-    ```sh
     pip install -r requirements.txt
     ```
+3. Run the scraper:
+    ```sh
+    python main.py
+    ```
+4. View the results in `job_results.csv`. View logs in `logs/job_scraper.log`.
 
-## Local Usage
 
-### Custom Search API
-To run locally, first create a [Programmable Google Search Engine](https://programmablesearchengine.google.com/about/).
+### Configuration
 
-Enable the Custom Search API:
-https://console.cloud.google.com/apis/library/customsearch.googleapis.com
-APIs & Services > Library > Search for Custom Search API
-Credentials > create an API Key
+If you wish to modify the search query, edit the `query` parameters in `main.py:566-573`.
 
-Create a `.env` file in the root directory with the following variables:
-```
-API_KEY=<your_google_api_key>
-SEARCH_ENGINE_ID=<your_google_search_engine_id>
-```
+If you wish to customize the ranking system, edit the preferences dictionary (`main.py:36-49`) to adjust scoring based on keywords.
 
-### Local PostgresQL Database
 
-Install [PostgresQL](https://www.postgresql.org/download/).
-Start and enable the PostgresQL service:
-```sh
-sudo systemctl start postgresql
-sudo systemctl enable postgresql
-```
+### Data Storage
 
-By default, PostgreSQL stores its data in the `/var/lib/postgresql/` directory. Create a database and user:
-```sh
-sudo -u postgres psql
-postgres=# CREATE DATABASE job_scraper;
-postgres=# CREATE USER <db_user> WITH PASSWORD '<db_pass>';
-postgres=# GRANT ALL PRIVILEGES ON DATABASE job_scraper TO <db_user>;
-postgres=# \q
-```
+- __Job Results:__ The results of job scraping are saved to `job_results.csv`. This file stores details such as:
 
-Add the new variables to the `.env` file:
-```
-API_KEY=<your_google_api_key>
-SEARCH_ENGINE_ID=<your_google_search_engine_id>
-DB_HOST=localhost
-DB_NAME=job_scraper
-DB_USER=<db_user>
-DB_PASS=<db_pass>
-```
+    - `company_name`: The company offering the job.
+    - `job_title`: The job title.
+    - `date_first_seen`: The first date the job was scraped.
+    - `salary_min` and `salary_max`: Salary range extracted from the - `job description, if available.
+    - `location`: Job location.
+    - `url`: The job posting URL.
+    - `rating`, `glassdoor_url`, `reviews`, `company_size`: Glassdoor information (if available).
+    - `score`: The computed score based on preferences.
+    - `preference_hits`: Which preferences were matched.
+    - `keywords`: Extracted keywords from the job description.
 
-### Run the Application
-
-Run the application:
-```sh
-python main.py
-```
-
-You can watch the live logs in another terminal:
-```sh
-tail -f logs/job_scraper.log
-```
-
-Or, view that file after the run to see which URLs were processed.
-
-### View the results
-
-The script should create three tables in the database: `jobs`, `foreign_jobs`, and `glassdoor_data`.
-You can view the results by connecting to the database:
-```sh
-$ sudo -u postgres psql  # log in as the postgres user (admin)
-postgres=> \c job_scraper  # connect to the job_scraper database
-# -OR- #
-$ psql -h localhost -U <db_user> -d job_scraper  # log in as user
-job_scraper=> SELECT * FROM jobs;
-job_scraper=> SELECT * FROM foreign_jobs;
-job_scraper=> SELECT * FROM glassdoor_data;
-```
-
-The results will also be available in CSV files in the `results` folder.
+- __Glassdoor Data:__ The project uses a CSV file called `glassdoor_data.csv` to store company ratings, number of reviews, company size, and Glassdoor URLs.
 
 
 ## Testing
@@ -128,18 +86,32 @@ flake8
 black --check .
 ```
 
-_Notes:_
+__Testing Notes:__
 - Set the mandatory minimum test coverage in `pyproject.toml` under `[tool.pytest.ini_options]`
 - Set the line length for `black` in `pyproject.toml` under `[tool.black]`
 - Set `flake8`'s line-length, ignores, and excludes in `.flake8`
 - `setup.py` is ignored in the coverage report as defined in `.coveragerc`
 
 
-
 ## Contributing
 
-Contributions are welcome! Please open an issue or submit a pull request.
-Please make sure `tox` passes before submitting a pull request.
+If you've scraped additional job data or improved the scraper in some way, please submit a pull request! To add your results to the repo:
+
+1. Run the scraper to collect job listings.
+2. Commit your changes and submit a pull request.
+3. Please make sure `tox` passes all tests before submitting.
+
+
+### How to Avoid Rate Limits
+
+You may run into rate limiting. If this happens, you can tweak the scraper’s behavior to avoid too many requests in a short period, such as adding a `time.sleep()` between requests.
+
+
+## Roadmap
+
+- Add support for more job sources.
+- Add more robust error handling for edge cases where job pages are formatted differently.
+- Introduce user-friendly front-end features for non-technical users to run the tool.
 
 
 ## License
