@@ -9,3 +9,5 @@ notes.txt
 *.egg-info/
 .tox/
 results/*.csv
+.vscode/
+job_results.csv

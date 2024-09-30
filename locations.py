@@ -1,6 +1,6 @@
 # black doesn't need to reformat these lists
 # fmt: off
-allow_keywords = [
+allow_locales = [
     "remote", "united states", "us", "americas", "silicon valley"
 ]
 
@@ -25,7 +25,7 @@ states_and_cities = [
     "washington", "west virginia", "wi", "wisconsin", "wv", "wy", "wyoming"
 ]
 
-exclude_keywords = [
+exclude_locales = [
     "canada", "latam", "europe", "mexico", "germany", "uk", "apac", "london"
 ]
 # fmt: on

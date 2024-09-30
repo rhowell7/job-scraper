@@ -5,16 +5,15 @@ import time
 from typing import Dict, Tuple, List, Optional
 from urllib.parse import urlparse, urlunparse
 
-import psycopg2
 import requests
 from bs4 import BeautifulSoup
-from dotenv import load_dotenv
+import csv
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 
-from locations import allow_keywords, states_and_cities, exclude_keywords
+from locations import allow_locales, states_and_cities, exclude_locales
 
 
 # Set up logging
@@ -28,15 +27,6 @@ logging.basicConfig(
         logging.StreamHandler(),
     ],
 )
-
-# Load environment variables from the .env file
-load_dotenv()
-API_KEY = os.getenv("API_KEY")
-SEARCH_ENGINE_ID = os.getenv("SEARCH_ENGINE_ID")
-DB_HOST = os.getenv("DB_HOST")
-DB_NAME = os.getenv("DB_NAME")
-DB_USER = os.getenv("DB_USER")
-DB_PASS = os.getenv("DB_PASS")
 
 # Load the dictionary into a set for fast keyword lookups
 with open("dict/words") as f:
@@ -59,27 +49,41 @@ preferences = {
 }
 
 
-def google_custom_search(query: str, num: int = 3) -> Optional[Dict]:
+def google_search(query: str, num_results: int = 100) -> List[str]:
     """
-    Perform a Google Custom Search API query and return the JSON response.
+    Perform a Google search and return the list of result URLs.
 
     Args:
         query (str): The search query to perform.
         num (int): The number of results to return (default 3).
 
     Returns:
-        Optional[Dict]: The JSON result from the API, or None if the request fails.
+        List[str]: A list of URLs from the search results.
     """
-    url = "https://www.googleapis.com/customsearch/v1"
-    params = {"q": query, "key": API_KEY, "cx": SEARCH_ENGINE_ID, "num": num}
-    response = requests.get(url, params=params)
-    if response.status_code == 200:
-        return response.json()
-    else:
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/91.0.4472.124 Safari/537.36"
+    }
+    search_url = f"https://www.google.com/search?q={query}&num={num_results}"
+    response = requests.get(search_url, headers=headers)
+
+    if response.status_code != 200:
         logging.error(
-            f"  Google Custom Search API request failed: { response.status_code }"
+            f"Failed to retrieve Google search results: {response.status_code}"
         )
-        return None
+        return []
+
+    soup = BeautifulSoup(response.text, "html.parser")
+    search_results = []
+
+    for g in soup.find_all("div", class_="g"):
+        anchor = g.find("a")
+        if anchor:
+            link = anchor["href"]
+            search_results.append(normalize_url(link))
+
+    return search_results
 
 
 def normalize_url(url: str) -> str:
@@ -116,12 +120,12 @@ def in_usa(location: str) -> bool:
 
     # Check if any part of the location matches an exclude keyword
     for word in words:
-        if word.strip() in exclude_keywords:
+        if word.strip() in exclude_locales:
             return False
 
     # Check if any part of the location matches an allow keyword or US city/state
     for word in words:
-        if word.strip() in allow_keywords or word.strip() in states_and_cities:
+        if word.strip() in allow_locales or word.strip() in states_and_cities:
             return True
 
     return True  # If no match is found, default to including the job
@@ -169,38 +173,54 @@ def extract_keywords(text: str) -> List[str]:
     return sorted(keyword_dict.values(), key=lambda word: word.lower())
 
 
-def extract_job_info(url: str) -> Optional[Dict]:
+def extract_job_info(url: str) -> Dict:
     """
-    Extract job information from the given URL.
+    Extract job information from the given URL. If only partial information
+    can be extracted (e.g., company name and job title), still save the URL to
+    prevent duplicate processing.
 
     Args:
         url (str): The URL of the job posting.
 
     Returns:
-        Optional[Dict]: A dictionary containing the job information, or None
-                        if the extraction fails.
+        Dict: A dictionary containing the job information. If full extraction
+              fails, returns at least the company name, job title, and URL.
     """
-    job_info = {}
+    job_info = {
+        "job_title": None,
+        "company_name": None,
+        "location": None,
+        "description": None,
+        "url": normalize_url(url),
+    }
+
     try:
         response = requests.get(url)
         if response.status_code == 200:
             soup = BeautifulSoup(response.text, "html.parser")
             full_title = soup.title.string.strip() if soup.title else None
 
-            # Initialize job details with default values
-            job_info["job_title"] = None
-            job_info["company_name"] = None
-            job_info["location"] = None
-            job_info["description"] = None
+            # Try to extract company name and job title from page title
+            if full_title:
+                if "greenhouse" in url:
+                    # Greenhouse pattern:
+                    # "Job Application for [Job Title] at [Company Name]"
+                    match = re.match(
+                        r"Job Application for (.+) at (.+)", full_title
+                    )
+                    if match:
+                        job_info["job_title"] = match.group(1).strip()
+                        job_info["company_name"] = match.group(2).strip()
+
+                elif "lever" in url:
+                    # Lever pattern: "[Company Name] - [Job Title]"
+                    parts = full_title.split(" - ", 1)
+                    if len(parts) == 2:
+                        job_info["company_name"] = parts[0].strip()
+                        job_info["job_title"] = parts[1].strip()
 
             # Greenhouse job board
             if "greenhouse" in url:
-                # GH pattern: "Job Application for [Job Title] at [Company Name]"
-                match = re.match(r"Job Application for (.+) at (.+)", full_title)
-                if match:
-                    job_info["job_title"] = match.group(1).strip()
-                    job_info["company_name"] = match.group(2).strip()
-
                 pattern = re.compile(
                     r'"job_post_location":"(.*?)",'
                     r'"public_url":"(.*?)",'
@@ -219,17 +239,36 @@ def extract_job_info(url: str) -> Optional[Dict]:
                         raw_text = job_description_div.get_text(separator="\n")
                         job_info["description"] = clean_text(raw_text)
                 else:
-                    logging.error(f"  Failed to extract job details from {url}")
-                    return None
+                    logging.warning(
+                        f"  Initial extraction failed. Trying fallback for {url}"
+                    )
+
+                    # Fallback to extract location
+                    location_div = soup.find("div", class_="location")
+                    if location_div:
+                        job_info["location"] = location_div.text.strip()
+                    else:
+                        logging.error(f"  Failed to extract location from {url}")
+                        if (
+                            not job_info["company_name"]
+                            or not job_info["job_title"]
+                        ):
+                            return None
+                        return job_info
+
+                    # Fallback to extract job description
+                    job_description_div = soup.find("div", id="content")
+                    if job_description_div:
+                        raw_text = job_description_div.get_text(separator="\n")
+                        job_info["description"] = clean_text(raw_text)
+                    else:
+                        logging.error(
+                            f"  Failed to extract job description from {url}"
+                        )
+                        return job_info
 
             # Lever job board
             elif "lever" in url:
-                # Lever pattern: "[Company Name] - [Job Title]"
-                parts = full_title.split(" - ", 1)
-                if len(parts) == 2:
-                    job_info["company_name"] = parts[0].strip()
-                    job_info["job_title"] = parts[1].strip()
-
                 # Extract the location
                 location_tag = soup.find("div", class_="posting-category")
                 if location_tag:
@@ -249,7 +288,7 @@ def extract_job_info(url: str) -> Optional[Dict]:
             logging.error(
                 f"  Failed to retrieve page {url}: {response.status_code}"
             )
-            return None
+            return job_info
     except requests.exceptions.RequestException as e:
         logging.error(f"  HTTP request failed: {e}")
         return None
@@ -268,9 +307,8 @@ def score_job(title: str, description: str) -> Tuple[int, List[str]]:
                                preference hits.
     """
     score = 0
-    title = title.lower()
-    description = description.lower()
     preference_hits = []
+    title, description = title.lower(), description.lower()
 
     # Add or subtract points based on preferences
     for keyword, value in preferences.items():
@@ -294,56 +332,34 @@ def extract_salary(description: str) -> Tuple[Optional[int], Optional[int]]:
         Tuple[Optional[int], Optional[int]]: A tuple containing the minimum
         and maximum salary values, or (None, None) if no salary is found.
     """
-    # Find the first two salary values after the '$' symbols
-    salary_pattern = re.compile(r"\$\s?(\d{1,3}(?:,\d{3})*)")
-    matches = salary_pattern.findall(description)
+    # Regex to find salary-related phrases with amounts
+    salary_pattern = re.compile(
+        r"(?i)(?:salary|range)[^$]*\$\s?(\d{1,3}(?:,\d{3})*)"
+        r"[^$]*?\$\s?(\d{1,3}(?:,\d{3})*)"
+    )
+    single_salary_pattern = re.compile(
+        r"(?i)(?:salary|range)[^$]*\$\s?(\d{1,3}(?:,\d{3})*)"
+    )
 
-    if len(matches) >= 2:
-        # If at least two salaries are found, return them as min and max
-        min_salary = int(matches[0].replace(",", ""))
-        max_salary = int(matches[1].replace(",", ""))
+    # Try to find a salary range first (two values)
+    range_match = salary_pattern.search(description)
+    if range_match:
+        min_salary = int(range_match.group(1).replace(",", ""))
+        max_salary = int(range_match.group(2).replace(",", ""))
         return min_salary, max_salary
 
-    elif len(matches) == 1:
-        # If only one salary is found, return it as the min; max=None
-        min_salary = int(matches[0].replace(",", ""))
+    # If no range found, look for a single salary
+    single_match = single_salary_pattern.search(description)
+    if single_match:
+        min_salary = int(single_match.group(1).replace(",", ""))
         return min_salary, None
 
     return None, None
 
 
-def get_glassdoor_data_from_db(company_name: str) -> Optional[Dict]:
+def save_glassdoor_data_to_csv(company_name: str, glassdoor_data: Dict):
     """
-    Get Glassdoor data from the database for the given company, if it exists.
-
-    Args:
-        company_name (str): The name of the company to search for.
-
-    Returns:
-        Optional[Dict]: A dictionary containing the Glassdoor data, or None if
-                        no data is found.
-    """
-    cursor.execute(
-        "SELECT glassdoor_rating, glassdoor_link, glassdoor_num_reviews, "
-        "company_size "
-        "FROM glassdoor_data "
-        "WHERE company = %s",
-        (job_info["company_name"],),
-    )
-    result = cursor.fetchone()
-    if result:
-        return {
-            "rating": result[0],
-            "glassdoor_url": result[1],
-            "reviews": result[2],
-            "company_size": result[3],
-        }
-    return None
-
-
-def save_glassdoor_data_to_db(company_name: str, glassdoor_data: Dict):
-    """
-    Save the Glassdoor data for the given company to the database.
+    Save the Glassdoor data for the given company to a CSV file.
 
     Args:
         company_name (str): The name of the company.
@@ -352,19 +368,50 @@ def save_glassdoor_data_to_db(company_name: str, glassdoor_data: Dict):
     Returns:
         None
     """
-    cursor.execute(
-        "INSERT INTO glassdoor_data (company, glassdoor_rating, glassdoor_link, "
-        "glassdoor_num_reviews, company_size) "
-        "VALUES (%s, %s, %s, %s, %s)",
-        (
-            company_name,
-            glassdoor_data["rating"],
-            glassdoor_data["glassdoor_url"],
-            glassdoor_data["reviews"],
-            glassdoor_data["company_size"],
-        ),
-    )
-    conn.commit()
+    fieldnames = [
+        "company_name",
+        "rating",
+        "glassdoor_url",
+        "reviews",
+        "company_size",
+    ]
+    file_exists = os.path.isfile("glassdoor_data.csv")
+
+    with open("glassdoor_data.csv", mode="a", newline="") as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        if not file_exists:
+            writer.writeheader()
+        writer.writerow(
+            {
+                "company_name": company_name,
+                "rating": glassdoor_data["rating"],
+                "glassdoor_url": glassdoor_data["glassdoor_url"],
+                "reviews": glassdoor_data["reviews"],
+                "company_size": glassdoor_data["company_size"],
+            }
+        )
+
+
+def get_glassdoor_data(company_name: str) -> Optional[Dict]:
+    """
+    Retrieve Glassdoor data for the given company name from the CSV file.
+
+    Args:
+        company_name (str): The name of the company to search for.
+
+    Returns:
+        Optional[Dict]: A dictionary containing the Glassdoor data, or None if
+                        the company is not found in the CSV file.
+    """
+    try:
+        with open("glassdoor_data.csv", newline="") as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                if row["company_name"].lower() == company_name.lower():
+                    return row
+    except FileNotFoundError:
+        logging.error("Glassdoor data CSV file not found.")
+    return None
 
 
 def scrape_glassdoor_data(company_name: str) -> Dict:
@@ -431,12 +478,10 @@ def scrape_glassdoor_data(company_name: str) -> Dict:
             # Extract the Glassdoor URL for the company
             try:
                 glassdoor_url = first_company_tile.get_attribute("href")
-                # glassdoor_url = 'https://www.glassdoor.com' + link
             except Exception:
                 glassdoor_url = "N/A"
 
         except Exception:
-            # If company tile is not found, return a message
             return {"error": f"No company data found for {company_name}"}
 
         # Create a dictionary to hold the extracted data
@@ -452,36 +497,72 @@ def scrape_glassdoor_data(company_name: str) -> Dict:
         driver.quit()
 
 
-def export_table_to_csv(cursor, table_name: str, csv_file_path: str):
+def job_exists_in_csv(url: str) -> bool:
     """
-    Export a PostgreSQL table to a CSV file.
+    Check if the job already exists in the CSV file.
 
     Args:
-        cursor: The cursor object for the database connection.
-        table_name (str): The name of the table to export.
-        csv_file_path (str): The file path to save the CSV file.
+        url (str): The URL of the job posting.
+
+    Returns:
+        bool: True if the job already exists, False otherwise.
     """
-    try:
-        query = f"COPY {table_name} TO STDOUT WITH CSV HEADER"
-        with open(csv_file_path, "w", newline="") as csv_file:
-            cursor.copy_expert(query, csv_file)
-        logging.info(
-            f"Table '{table_name}' successfully exported to {csv_file_path}"
-        )
-    except Exception as e:
-        logging.error(f"Error exporting table '{table_name}': {e}")
+    # Check if the file exists
+    if not os.path.isfile("job_results.csv"):
+        return False
+
+    with open("job_results.csv", newline="") as csv_file:
+        reader = csv.DictReader(csv_file)
+        for row in reader:
+            if row["url"] == url:
+                logging.info(f"  Duplicate job found: {url}. Skipping.")
+                return True
+    return False
+
+
+def save_to_csv(job_info: Dict, file_name: str = "job_results.csv"):
+    """
+    Save the job information to a CSV file.
+
+    Args:
+        job_info (Dict): A dictionary containing the job information.
+        file_name (str): The name of the CSV file to save to.
+
+    Returns:
+        None
+    """
+    fieldnames = [
+        "company_name",
+        "job_title",
+        "date_first_seen",
+        "salary_min",
+        "salary_max",
+        "location",
+        "url",
+        "rating",
+        "glassdoor_url",
+        "reviews",
+        "company_size",
+        "score",
+        "preference_hits",
+        "keywords",
+    ]
+    file_exists = os.path.isfile(file_name)
+
+    job_info.pop("description", None)
+    job_info["date_first_seen"] = time.strftime("%Y-%m-%d %H:%M:%S")
+
+    with open(file_name, mode="a", newline="") as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        if not file_exists:
+            writer.writeheader()
+        writer.writerow(job_info)
 
 
 if __name__ == "__main__":
     """
     Main entry point of the script.
     """
-    # Connect to PostgreSQL
-    conn = psycopg2.connect(
-        dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST
-    )
-    cursor = conn.cursor()
-
     query = (
         "(intitle:engineer OR intitle:software OR intitle:python OR "
         "intitle:developer OR intitle:data) "
@@ -491,119 +572,63 @@ if __name__ == "__main__":
         '-intitle:principal -intitle:director "Remote"'
     )
 
-    results = google_custom_search(query, 10)
+    results = google_search(query, 10)
 
-    # Deduplicate URLs, if they already exist in `jobs` or `foreign_jobs` tables
-    cursor.execute("SELECT url FROM jobs")
-    existing_urls = set(url for url, in cursor.fetchall())
-    cursor.execute("SELECT url FROM foreign_jobs")
-    foreign_urls = set(url for url, in cursor.fetchall())
+    for url in results:
+        url = normalize_url(url)
+        logging.info(f"Processing URL: {url}")
+        # If job url already exists in the CSV file, skip it
+        if job_exists_in_csv(url):
+            continue
+        job_info = extract_job_info(url)
+        if not job_info or not job_info.get("company_name"):
+            logging.info("  Skipping job with no information retrieved.")
+            continue
 
-    if results:
-        for item in results.get("items", []):
-            logging.info(f"Processing URL: {item['link']}")
-            title = item["title"]
-            url = normalize_url(item["link"])
-
-            # Skip duplicate URLs
-            if url in existing_urls:
-                logging.info(f"  Skipping duplicate US job: {title}")
-                continue
-            elif url in foreign_urls:
-                logging.info(f"  Skipping duplicate foreign job: {title}")
-                continue
-
-            job_info = extract_job_info(url)
-            if (
-                not job_info
-                or not job_info["job_title"]
-                or not job_info["company_name"]
-            ):
-                logging.error(f"  Failed to extract job and company from {url}")
-                continue
-
-            # Skip jobs outside the USA
-            if not in_usa(job_info["location"]):
-                logging.info(
-                    f"  Skipping job outside the USA: {job_info['job_title']}"
-                )
-                logging.info(f"    Location: {job_info['location']}")
-                logging.info(f"    URL: {url}")
-                logging.info(f"    Title: {job_info['job_title']}")
-                logging.info(f"    Company: {job_info['company_name']}")
-
-                cursor.execute(
-                    "INSERT INTO foreign_jobs (url, company, job_title, "
-                    "location, date_first_seen) "
-                    "VALUES (%s, %s, %s, %s, CURRENT_DATE)",
-                    (
-                        url,
-                        job_info["company_name"],
-                        job_info["job_title"],
-                        job_info["location"],
-                    ),
-                )
-                conn.commit()
-                continue
-
-            score, preference_hits = score_job(
-                job_info["job_title"], job_info["description"]
+        glassdoor_data = get_glassdoor_data(job_info.get("company_name", ""))
+        if glassdoor_data:
+            logging.info(
+                f"  Glassdoor data found for {job_info.get('company_name')}"
             )
-            salary_min, salary_max = extract_salary(job_info["description"])
-            keywords = extract_keywords(job_info["description"])
-
-            # Get or scrape Glassdoor data
-            company = job_info["company_name"]
-            glassdoor_data = get_glassdoor_data_from_db(company)
-
-            if glassdoor_data is None:
-                logging.info(f"  Scraping Glassdoor data for {company}")
-                glassdoor_data = scrape_glassdoor_data(company)
-                save_glassdoor_data_to_db(job_info["company_name"], glassdoor_data)
-            else:
-                logging.info(f"  Using cached Glassdoor data for {company}")
-
-            cursor.execute(
-                """
-                INSERT INTO jobs (
-                    company, job_title, date_first_seen, salary_min, salary_max,
-                    location, url, glassdoor_rating, glassdoor_link,
-                    glassdoor_num_reviews, company_size, score, preference_hits,
-                    keywords
-                )
-                VALUES (
-                    %s, %s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, %s, %s,
-                    %s, %s, %s
-                )
-                """,
-                (
-                    job_info["company_name"],
-                    job_info["job_title"],
-                    salary_min,
-                    salary_max,
-                    job_info["location"],
-                    url,
-                    glassdoor_data["rating"],
-                    glassdoor_data["glassdoor_url"],
-                    glassdoor_data["reviews"],
-                    glassdoor_data["company_size"],
-                    score,
-                    preference_hits,
-                    keywords,
-                ),
+            job_info.update(glassdoor_data)
+        else:
+            logging.info(
+                f"  No Glassdoor data found for {job_info.get('company_name')}"
             )
-            conn.commit()
-            logging.info(f"  Job added to the database: {job_info['job_title']}")
+            glassdoor_data = scrape_glassdoor_data(job_info.get("company_name"))
+            save_glassdoor_data_to_csv(
+                job_info.get("company_name"), glassdoor_data
+            )
+            job_info.update(glassdoor_data)
 
-    # Export the jobs table to a CSV file with the date in the filename
-    export_table_to_csv(
-        cursor, "jobs", f"results/{time.strftime('%Y-%m-%d-%H:%M')}_jobs.csv"
-    )
-    export_table_to_csv(
-        cursor,
-        "foreign_jobs",
-        f"results/{time.strftime('%Y-%m-%d-%H:%M')}_foreign_jobs.csv",
-    )
+        # If no location, save to csv and continue
+        if not job_info.get("location"):
+            save_to_csv(job_info, "job_results.csv")
+            logging.info("  No location found. Job saved to CSV.")
+            continue
 
-    cursor.close()
-    conn.close()
+        if not in_usa(job_info.get("location", "")):
+            logging.info("  Skipping job outside the USA or missing info.")
+            logging.info(f"  Location: {job_info.get('location', '')}")
+            logging.info(f"  Title: {job_info.get('job_title', '')}")
+            continue
+
+        # If no description, save to csv and continue
+        if not job_info.get("description"):
+            save_to_csv(job_info, "job_results.csv")
+            logging.info("  No description found. Job saved to CSV.")
+            continue
+
+        job_info["score"], job_info["preference_hits"] = score_job(
+            job_info.get("job_title", ""), job_info.get("description", "")
+        )
+
+        job_info["salary_min"], job_info["salary_max"] = extract_salary(
+            job_info.get("description", "")
+        )
+        job_info["keywords"] = extract_keywords(job_info.get("description", ""))
+
+        save_to_csv(job_info)
+        logging.info(f"  Job added to the CSV file: {job_info.get('job_title')}")
+
+    logging.info("All jobs processed.")
