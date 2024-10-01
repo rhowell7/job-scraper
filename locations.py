@@ -1,7 +1,8 @@
 # black doesn't need to reformat these lists
 # fmt: off
 allow_locales = [
-    "remote", "united states", "us", "americas", "silicon valley"
+    "remote", "united states", "us", "americas", "silicon valley",
+    "san francisco", "bay area", "new york city", "nyc", "los angeles"
 ]
 
 states_and_cities = [
@@ -26,6 +27,10 @@ states_and_cities = [
 ]
 
 exclude_locales = [
-    "canada", "latam", "europe", "mexico", "germany", "uk", "apac", "london"
+    "canada", "latam", "europe", "mexico", "germany", "uk", "apac", "london",
+    "argentina", "brazil", "ireland", "united kingdom", "uk", "spain", "italy",
+    "poland", "czech republic", "bulgaria", "netherlands", "slovakia", "hungary",
+    "casablanca", "morocco", "india", "warsaw", "paris", "chile", "colombia",
+    "france"
 ]
 # fmt: on

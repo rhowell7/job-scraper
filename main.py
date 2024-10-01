@@ -99,7 +99,9 @@ def normalize_url(url: str) -> str:
     parsed = urlparse(url)
     # Reconstruct the URL without query parameters
     normalized = parsed._replace(query="")
-    return urlunparse(normalized)
+    url = urlunparse(normalized)
+    url = re.sub(r"/apply$", "/", url)
+    return url
 
 
 def in_usa(location: str) -> bool:
@@ -384,10 +386,10 @@ def save_glassdoor_data_to_csv(company_name: str, glassdoor_data: Dict):
         writer.writerow(
             {
                 "company_name": company_name,
-                "rating": glassdoor_data["rating"],
-                "glassdoor_url": glassdoor_data["glassdoor_url"],
-                "reviews": glassdoor_data["reviews"],
-                "company_size": glassdoor_data["company_size"],
+                "rating": glassdoor_data.get("rating", "N/A"),
+                "glassdoor_url": glassdoor_data.get("glassdoor_url", "N/A"),
+                "reviews": glassdoor_data.get("reviews", "N/A"),
+                "company_size": glassdoor_data.get("company_size", "N/A"),
             }
         )
 
@@ -549,14 +551,16 @@ def save_to_csv(job_info: Dict, file_name: str = "job_results.csv"):
     ]
     file_exists = os.path.isfile(file_name)
 
-    job_info.pop("description", None)
     job_info["date_first_seen"] = time.strftime("%Y-%m-%d %H:%M:%S")
+
+    # Filter out any keys that are not part of 'fieldnames'
+    filtered_job_info = {key: job_info.get(key, "") for key in fieldnames}
 
     with open(file_name, mode="a", newline="") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         if not file_exists:
             writer.writeheader()
-        writer.writerow(job_info)
+        writer.writerow(filtered_job_info)
 
 
 if __name__ == "__main__":
@@ -572,11 +576,13 @@ if __name__ == "__main__":
         '-intitle:principal -intitle:director "Remote"'
     )
 
-    results = google_search(query, 10)
+    results = google_search(query)
+    i = 1
 
     for url in results:
         url = normalize_url(url)
-        logging.info(f"Processing URL: {url}")
+        logging.info(f"Processing job {i}/{len(results)}: {url}")
+        i += 1
         # If job url already exists in the CSV file, skip it
         if job_exists_in_csv(url):
             continue
@@ -592,9 +598,6 @@ if __name__ == "__main__":
             )
             job_info.update(glassdoor_data)
         else:
-            logging.info(
-                f"  No Glassdoor data found for {job_info.get('company_name')}"
-            )
             glassdoor_data = scrape_glassdoor_data(job_info.get("company_name"))
             save_glassdoor_data_to_csv(
                 job_info.get("company_name"), glassdoor_data
