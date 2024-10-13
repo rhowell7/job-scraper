@@ -31,6 +31,6 @@ exclude_locales = [
     "argentina", "brazil", "ireland", "united kingdom", "uk", "spain", "italy",
     "poland", "czech republic", "bulgaria", "netherlands", "slovakia", "hungary",
     "casablanca", "morocco", "india", "warsaw", "paris", "chile", "colombia",
-    "france"
+    "france", "sweden", "lisbon", "portugal"
 ]
 # fmt: on
