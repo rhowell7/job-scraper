@@ -416,6 +416,36 @@ def get_glassdoor_data(company_name: str) -> Optional[Dict]:
     return None
 
 
+def parse_company_size(company_size_text):
+    """
+    Parse the company size text into a standardized format.
+
+    Args:
+        company_size_text (str): The company size text to parse.
+
+    Returns:
+        str: The parsed company size in the format "min-max" or "N/A".
+
+    """
+    try:
+        # Regex to match "51 to 200 Employees", "1K to 5K Employees", etc.
+        match = re.match(
+            r"(\d+)([K]?)\s*to\s*(\d+)([K]?) Employees", company_size_text
+        )
+        if match:
+            start, start_suffix, end, end_suffix = match.groups()
+            start = int(start) * 1000 if start_suffix == "K" else int(start)
+            end = int(end) * 1000 if end_suffix == "K" else int(end)
+            return f"{start}-{end}"
+        elif "Employees" in company_size_text and "+" in company_size_text:
+            # Handle cases like "10000+ Employees"
+            return company_size_text.replace(" Employees", "").replace("K", "000")
+        else:
+            return company_size_text  # Return as-is if format is unexpected
+    except Exception:
+        return "N/A"
+
+
 def scrape_glassdoor_data(company_name: str) -> Dict:
     """
     Scrape Glassdoor data for the given company name.
@@ -471,9 +501,10 @@ def scrape_glassdoor_data(company_name: str) -> Dict:
 
             # Extract the company size
             try:
-                company_size = first_company_tile.find_element(
+                company_size_text = first_company_tile.find_element(
                     By.XPATH, ".//span[contains(text(),'Employees')]"
                 ).text.strip()
+                company_size = parse_company_size(company_size_text)
             except Exception:
                 company_size = "N/A"
 
