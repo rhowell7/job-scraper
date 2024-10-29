@@ -27,10 +27,12 @@ states_and_cities = [
 ]
 
 exclude_locales = [
-    "canada", "latam", "europe", "mexico", "germany", "uk", "apac", "london",
-    "argentina", "brazil", "ireland", "united kingdom", "uk", "spain", "italy",
-    "poland", "czech republic", "bulgaria", "netherlands", "slovakia", "hungary",
-    "casablanca", "morocco", "india", "warsaw", "paris", "chile", "colombia",
-    "france", "sweden", "lisbon", "portugal"
+    "apac", "argentina", "brazil", "bulgaria", "canada", "casablanca",
+    "chile", "colombia", "czech republic", "cyprus", "emea", "europe", "france",
+    "germany", "hungary", "india", "ireland", "italy", "latam", "lisbon",
+    "london", "mexico", "morocco", "netherlands", "paris", "poland",
+    "portugal", "slovakia", "spain", "sweden", "toronto", "uk", "united kingdom",
+    "warsaw"
 ]
+
 # fmt: on
