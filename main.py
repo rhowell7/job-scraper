@@ -472,6 +472,11 @@ def scrape_glassdoor_data(company_name: str) -> Dict:
         )
         driver.get(search_url)
         time.sleep(2)
+        # Pre-set variables to N/A
+        rating = "N/A"
+        reviews = "N/A"
+        company_size = "unknown"
+        glassdoor_url = "unknown"
 
         try:
             first_company_tile = driver.find_element(By.CLASS_NAME, "company-tile")
@@ -486,7 +491,7 @@ def scrape_glassdoor_data(company_name: str) -> Dict:
                     .replace(" ★", "")
                 )
             except Exception:
-                rating = "N/A"
+                logging.warning(f"  No glassdoor rating found for {company_name}")
 
             # Extract the number of reviews
             try:
@@ -496,8 +501,13 @@ def scrape_glassdoor_data(company_name: str) -> Dict:
                 reviews = reviews_span.find_element(
                     By.XPATH, "./preceding-sibling::span"
                 ).text.strip()
+
+                # Might say 1K or 2K, convert to 1000 or 2000
+                if "K" in reviews:
+                    reviews = reviews.replace("K", "000")
+
             except Exception:
-                reviews = "N/A"
+                logging.warning(f"  No glassdoor reviews found for {company_name}")
 
             # Extract the company size
             try:
@@ -506,13 +516,13 @@ def scrape_glassdoor_data(company_name: str) -> Dict:
                 ).text.strip()
                 company_size = parse_company_size(company_size_text)
             except Exception:
-                company_size = "N/A"
+                logging.warning(f"  No company size found for {company_name}")
 
             # Extract the Glassdoor URL for the company
             try:
                 glassdoor_url = first_company_tile.get_attribute("href")
             except Exception:
-                glassdoor_url = "N/A"
+                logging.warning(f"  No glassdoor URL found for {company_name}")
 
         except Exception:
             return {"error": f"No company data found for {company_name}"}
@@ -567,15 +577,18 @@ def save_to_csv(job_info: Dict, file_name: str = "job_results.csv"):
     fieldnames = [
         "company_name",
         "job_title",
+        "their_thing",
         "date_first_seen",
+        "app_deadline",
         "salary_min",
         "salary_max",
         "location",
         "url",
         "rating",
-        "glassdoor_url",
         "reviews",
         "company_size",
+        "glassdoor_url",
+        "found_by",
         "score",
         "preference_hits",
         "keywords",
@@ -661,6 +674,11 @@ if __name__ == "__main__":
             job_info.get("description", "")
         )
         job_info["keywords"] = extract_keywords(job_info.get("description", ""))
+
+        # Blank placeholders for their_thing and app_deadline
+        job_info["their_thing"] = ""
+        job_info["app_deadline"] = ""
+        job_info["found_by"] = "job-scraper"
 
         save_to_csv(job_info)
         logging.info(f"  Job added to the CSV file: {job_info.get('job_title')}")
