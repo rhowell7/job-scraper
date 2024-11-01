@@ -1,7 +1,7 @@
 # black doesn't need to reformat these lists
 # fmt: off
 allow_locales = [
-    "remote", "united states", "us", "americas", "silicon valley",
+    "united states", "us", "usa", "americas", "silicon valley",
     "san francisco", "bay area", "new york city", "nyc", "los angeles"
 ]
 

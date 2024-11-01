@@ -114,21 +114,25 @@ def in_usa(location: str) -> bool:
     Returns:
         bool: True if the location is in the USA, False otherwise
     """
+    logging.info(f"Checking location: {location}")
     location = location.lower()
 
-    delimiters = [",", "/", "-", "(", ")", " "]  # Split by space or no?
+    delimiters = [",", "/", "-", "(", ")", "&"]
     pattern = "|".join(map(re.escape, delimiters))
     words = re.split(pattern, location)
 
     # Check if any part of the location matches an exclude keyword
     for word in words:
-        if word.strip() in exclude_locales:
-            return False
-
-    # Check if any part of the location matches an allow keyword or US city/state
-    for word in words:
-        if word.strip() in allow_locales or word.strip() in states_and_cities:
+        word = word.strip()
+        if word in states_and_cities or word in allow_locales:
+            logging.info(f"  Allowed location found: {word}")
             return True
+
+    for word in words:
+        word = word.strip()
+        if word in exclude_locales:
+            logging.info(f"  Excluded location found: {word}")
+            return False
 
     return True  # If no match is found, default to including the job
 
