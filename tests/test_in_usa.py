@@ -32,3 +32,23 @@ def test_apac():
 def test_unknown():
     result = in_usa("Neverheardofit")
     assert result is True
+
+
+def test_many_locs():
+    result = in_usa("Argentina; Brazil; LATM; Ireland; United Kingdom; Spain; Italy; Poland; Czech Republic; Bulgaria; Netherlands; Slovakia; Hungary")
+    assert result is False
+
+
+def test_many_locs2():
+    result = in_usa("Dublin; Amsterdam; Poland; Brazil")
+    assert result is False
+
+
+def test_remote_poland():
+    result = in_usa("Remote Poland")
+    assert result is False
+
+
+def test_remote():
+    result = in_usa("Remote")
+    assert result is True

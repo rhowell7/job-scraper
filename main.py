@@ -117,7 +117,7 @@ def in_usa(location: str) -> bool:
     logging.info(f"Checking location: {location}")
     location = location.lower()
 
-    delimiters = [",", "/", "-", "(", ")", "&"]
+    delimiters = [",", "/", "-", "(", ")", "&", ";", " "]
     pattern = "|".join(map(re.escape, delimiters))
     words = re.split(pattern, location)
 
