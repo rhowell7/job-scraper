@@ -544,27 +544,25 @@ def scrape_glassdoor_data(company_name: str) -> Dict:
         driver.quit()
 
 
-def job_exists_in_csv(url: str) -> bool:
+def load_existing_urls(file_name: str = "job_results.csv") -> set:
     """
-    Check if the job already exists in the CSV file.
+    Load existing job URLs from the CSV file into a set for fast lookup.
 
     Args:
-        url (str): The URL of the job posting.
+        file_name (str): The name of the CSV file to load.
 
     Returns:
-        bool: True if the job already exists, False otherwise.
+        set: A set containing URLs already present in the CSV.
     """
-    # Check if the file exists
-    if not os.path.isfile("job_results.csv"):
-        return False
-
-    with open("job_results.csv", newline="") as csv_file:
-        reader = csv.DictReader(csv_file)
-        for row in reader:
-            if row["url"] == url:
-                logging.info(f"  Duplicate job found: {url}. Skipping.")
-                return True
-    return False
+    urls = set()
+    if os.path.isfile(file_name):
+        with open(file_name, newline="") as csv_file:
+            reader = csv.DictReader(csv_file)
+            for row in reader:
+                urls.add(row["url"])
+    else:
+        logging.info("CSV file not found; starting with an empty URL set.")
+    return urls
 
 
 def save_to_csv(job_info: Dict, file_name: str = "job_results.csv"):
@@ -626,13 +624,15 @@ if __name__ == "__main__":
 
     results = google_search(query)
     i = 1
+    existing_urls = load_existing_urls()
 
     for url in results:
         url = normalize_url(url)
         logging.info(f"Processing job {i}/{len(results)}: {url}")
         i += 1
-        # If job url already exists in the CSV file, skip it
-        if job_exists_in_csv(url):
+
+        if url in existing_urls:
+            logging.info(f"  Skipping duplicate job: {url}.")
             continue
         job_info = extract_job_info(url)
         if not job_info or not job_info.get("company_name"):

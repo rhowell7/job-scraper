@@ -10,4 +10,4 @@ notes.txt
 .tox/
 results/*.csv
 .vscode/
-job_results.csv
+job_results.csv*
