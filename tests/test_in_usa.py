@@ -35,7 +35,9 @@ def test_unknown():
 
 
 def test_many_locs():
-    result = in_usa("Argentina; Brazil; LATM; Ireland; United Kingdom; Spain; Italy; Poland; Czech Republic; Bulgaria; Netherlands; Slovakia; Hungary")
+    result = in_usa(
+        "Argentina; Brazil; LATM; Ireland; United Kingdom; Spain; Italy; Poland; Czech Republic; Bulgaria; Netherlands; Slovakia; Hungary"  # noqa: E501
+    )
     assert result is False
 
 
