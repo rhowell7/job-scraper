@@ -53,11 +53,14 @@ If you wish to customize the ranking system, edit the preferences dictionary (`m
 
     - `company_name`: The company offering the job.
     - `job_title`: The job title.
+    - `their_thing`: Placeholder for the company's product or service.
     - `date_first_seen`: The first date the job was scraped.
+    - `app_deadline`: Placeholder for the application deadline.
     - `salary_min` and `salary_max`: Salary range extracted from the - `job description, if available.
     - `location`: Job location.
     - `url`: The job posting URL.
-    - `rating`, `glassdoor_url`, `reviews`, `company_size`: Glassdoor information (if available).
+    - `rating`, `reviews`,  `company_size`, `glassdoor_url`: Glassdoor information (if available).
+    - `found_by`: Where the job was found (job-scraper)
     - `score`: The computed score based on preferences.
     - `preference_hits`: Which preferences were matched.
     - `keywords`: Extracted keywords from the job description.

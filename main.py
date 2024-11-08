@@ -391,9 +391,9 @@ def save_glassdoor_data_to_csv(company_name: str, glassdoor_data: Dict):
             {
                 "company_name": company_name,
                 "rating": glassdoor_data.get("rating", "N/A"),
-                "glassdoor_url": glassdoor_data.get("glassdoor_url", "N/A"),
+                "glassdoor_url": glassdoor_data.get("glassdoor_url", "unknown"),
                 "reviews": glassdoor_data.get("reviews", "N/A"),
-                "company_size": glassdoor_data.get("company_size", "N/A"),
+                "company_size": glassdoor_data.get("company_size", "unknown"),
             }
         )
 
@@ -428,7 +428,7 @@ def parse_company_size(company_size_text):
         company_size_text (str): The company size text to parse.
 
     Returns:
-        str: The parsed company size in the format "min-max" or "N/A".
+        str: The parsed company size in the format "min-max" or "unknown".
 
     """
     try:
@@ -447,7 +447,7 @@ def parse_company_size(company_size_text):
         else:
             return company_size_text  # Return as-is if format is unexpected
     except Exception:
-        return "N/A"
+        return "unknown"
 
 
 def scrape_glassdoor_data(company_name: str) -> Dict:
