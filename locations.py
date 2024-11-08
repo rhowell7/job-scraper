@@ -1,12 +1,7 @@
 # black doesn't need to reformat these lists
 # fmt: off
 allow_locales = [
-    "united states", "us", "usa", "americas", "silicon valley",
-    "san francisco", "bay area", "new york city", "nyc", "los angeles"
-]
-
-states_and_cities = [
-    "ak", "al", "alabama", "alaska", "ann arbor", "atlanta", "austin",
+    "us", "usa", "americas", "ak", "al", "alabama", "alaska", "atlanta", "austin",
     "boston", "boulder", "ca", "california", "charlotte", "chicago",
     "cleveland", "co", "colorado", "columbus", "connecticut", "ct", "dallas",
     "dc", "de", "dearborn", "delaware", "denver", "detroit", "durham",
@@ -27,12 +22,12 @@ states_and_cities = [
 ]
 
 exclude_locales = [
-    "apac", "argentina", "brazil", "bulgaria", "canada", "casablanca",
-    "chile", "colombia", "czech republic", "cyprus", "emea", "europe", "france",
-    "germany", "hungary", "india", "ireland", "italy", "latam", "lisbon",
-    "london", "mexico", "morocco", "netherlands", "paris", "poland",
-    "portugal", "slovakia", "spain", "sweden", "toronto", "uk", "united kingdom",
-    "warsaw"
+    "apac", "argentina", "brazil", "buenos", "aires", "bulgaria",
+    "canada", "casablanca", "chile", "colombia", "czech republic",
+    "cyprus", "emea", "europe", "france", "germany", "hungary", "india",
+    "ireland", "italy", "latam", "lisbon", "london", "mexico", "morocco",
+    "netherlands", "paris", "poland", "portugal", "slovakia", "spain",
+    "sweden", "toronto", "uk", "united kingdom", "warsaw"
 ]
 
 # fmt: on

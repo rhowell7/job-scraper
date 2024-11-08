@@ -54,3 +54,23 @@ def test_remote_poland():
 def test_remote():
     result = in_usa("Remote")
     assert result is True
+
+
+def test_cyprus():
+    result = in_usa("Pora.ai Cyprus or remote")
+    assert result is False
+
+
+def test_remote_emea():
+    result = in_usa("Remote, EMEA")
+    assert result is False
+
+
+def test_naperville():
+    result = in_usa("Naperville, IL or Remote")
+    assert result is True
+
+
+def test_argentina():
+    result = in_usa("Buenos Aires")
+    assert result is False

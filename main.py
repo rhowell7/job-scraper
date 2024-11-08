@@ -13,7 +13,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 
-from locations import allow_locales, states_and_cities, exclude_locales
+from locations import allow_locales, exclude_locales
 
 
 # Set up logging
@@ -114,7 +114,7 @@ def in_usa(location: str) -> bool:
     Returns:
         bool: True if the location is in the USA, False otherwise
     """
-    logging.info(f"Checking location: {location}")
+    logging.info(f"  Checking location: {location}")
     location = location.lower()
 
     delimiters = [",", "/", "-", "(", ")", "&", ";", " "]
@@ -124,7 +124,7 @@ def in_usa(location: str) -> bool:
     # Check if any part of the location matches an exclude keyword
     for word in words:
         word = word.strip()
-        if word in states_and_cities or word in allow_locales:
+        if word in allow_locales:
             logging.info(f"  Allowed location found: {word}")
             return True
 
