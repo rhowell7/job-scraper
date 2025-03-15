@@ -8,12 +8,9 @@ from urllib.parse import urlparse, urlunparse
 import requests
 from bs4 import BeautifulSoup
 import csv
-from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
-import time
+import undetected_chromedriver as uc
 
 from locations import allow_locales, exclude_locales
 
@@ -50,7 +47,21 @@ preferences = {
     "On-site": -10,
 }
 
-def google_search(query: str, num_results: int = 100) -> List[str]:
+# Set up the Chrome driver
+# If bot detection becomes an issue:
+#   1. Rotate between different user agents
+#   2. Use a proxy service
+#   3. Randomize sleep time
+#   4. Use Google's Custom Search API
+#   5. Use Bing instead
+driver_path = ChromeDriverManager().install()
+options = uc.ChromeOptions()
+options.add_argument("--headless")
+options.add_argument("--disable-blink-features=AutomationControlled")
+driver = uc.Chrome(driver_executable_path=driver_path, options=options)
+
+
+def google_search(query: str, num_results: int = 10) -> List[str]:
     """
     Perform a Google search and return the list of result URLs.
 
@@ -61,19 +72,10 @@ def google_search(query: str, num_results: int = 100) -> List[str]:
     Returns:
         List[str]: A list of URLs from the search results.
     """
-    options = Options()
-    options.add_argument("--headless")  # Run in headless mode
-    options.add_argument("--disable-blink-features=AutomationControlled")  # Helps evade bot detection
-    options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-
-    service = Service(ChromeDriverManager().install())
-    driver = webdriver.Chrome(service=service, options=options)
-
     search_url = f"https://www.google.com/search?q={query}&num={num_results}"
     driver.get(search_url)
 
     time.sleep(3)  # Allow time for JavaScript to execute
-
     soup = BeautifulSoup(driver.page_source, "html.parser")
     driver.quit()
 
@@ -83,6 +85,9 @@ def google_search(query: str, num_results: int = 100) -> List[str]:
         if anchor:
             link = anchor["href"]
             search_results.append(normalize_url(link))
+
+    if not search_results:
+        logging.error("No search results found. Maybe bot detection?")
 
     return search_results
 
@@ -462,13 +467,6 @@ def scrape_glassdoor_data(company_name: str) -> Dict:
         Dict: A dictionary containing the Glassdoor data.
 
     """
-    # Set up Chrome options to run headless
-    chrome_options = Options()
-    # chrome_options.add_argument("--headless")  # Uncomment to run headless
-
-    # Set up the Chrome driver
-    service = Service("/usr/local/bin/chromedriver")
-    driver = webdriver.Chrome(service=service, options=chrome_options)
     try:
         # Search for the company on Glassdoor
         search_url = (
