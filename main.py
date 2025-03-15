@@ -613,13 +613,20 @@ if __name__ == "__main__":
     """
     Main entry point of the script.
     """
+    # Google search query to find job postings
+    # intitle: restricts results to those with specific words in the job title
+    # (keyword OR keyword): searches for any of the keywords in the job listing
+    # site: restricts results to a specific site, currently Lever and Greenhouse
+    # -intitle: excludes results with specific words in the job title
+    # "Remote": the word "Remote" must be found anywhere in the job listing
     query = (
         "(intitle:engineer OR intitle:software OR intitle:python OR "
         "intitle:developer OR intitle:data) "
         '(python OR backend OR ml OR "machine learning") '
         "site:lever.co OR site:greenhouse.io "
         "-intitle:staff -intitle:senior -intitle:manager -intitle:lead "
-        '-intitle:principal -intitle:director "Remote"'
+        "-intitle:principal -intitle:director "
+        '"Remote"'
     )
 
     results = google_search(query)

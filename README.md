@@ -42,7 +42,7 @@ Job Scraper is a lightweight Python-based tool designed to scrape job listings f
 
 ### Configuration
 
-If you wish to modify the search query, edit the `query` parameters in `main.py:566-573`.
+If you wish to modify the search query, edit the `query` parameters in `main.py:616-630`.
 
 If you wish to customize the ranking system, edit the preferences dictionary (`main.py:36-49`) to adjust scoring based on keywords.
 
