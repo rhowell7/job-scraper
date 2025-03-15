@@ -12,6 +12,8 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+import time
 
 from locations import allow_locales, exclude_locales
 
@@ -48,35 +50,34 @@ preferences = {
     "On-site": -10,
 }
 
-
 def google_search(query: str, num_results: int = 100) -> List[str]:
     """
     Perform a Google search and return the list of result URLs.
 
     Args:
         query (str): The search query to perform.
-        num (int): The number of results to return (default 3).
+        num (int): The number of results to return (default 100).
 
     Returns:
         List[str]: A list of URLs from the search results.
     """
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/91.0.4472.124 Safari/537.36"
-    }
+    options = Options()
+    options.add_argument("--headless")  # Run in headless mode
+    options.add_argument("--disable-blink-features=AutomationControlled")  # Helps evade bot detection
+    options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+
+    service = Service(ChromeDriverManager().install())
+    driver = webdriver.Chrome(service=service, options=options)
+
     search_url = f"https://www.google.com/search?q={query}&num={num_results}"
-    response = requests.get(search_url, headers=headers)
+    driver.get(search_url)
 
-    if response.status_code != 200:
-        logging.error(
-            f"Failed to retrieve Google search results: {response.status_code}"
-        )
-        return []
+    time.sleep(3)  # Allow time for JavaScript to execute
 
-    soup = BeautifulSoup(response.text, "html.parser")
+    soup = BeautifulSoup(driver.page_source, "html.parser")
+    driver.quit()
+
     search_results = []
-
     for g in soup.find_all("div", class_="g"):
         anchor = g.find("a")
         if anchor:
@@ -630,6 +631,7 @@ if __name__ == "__main__":
     )
 
     results = google_search(query)
+    logging.info(f"Found {len(results)} job postings.")
     i = 1
     existing_urls = load_existing_urls()
 
