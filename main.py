@@ -8,11 +8,16 @@ from urllib.parse import urlparse, urlunparse
 import requests
 from bs4 import BeautifulSoup
 import csv
+from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
-import undetected_chromedriver as uc
 
 from locations import allow_locales, exclude_locales
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 # Set up logging
@@ -47,49 +52,65 @@ preferences = {
     "On-site": -10,
 }
 
-# Set up the Chrome driver
-# If bot detection becomes an issue:
-#   1. Rotate between different user agents
-#   2. Use a proxy service
-#   3. Randomize sleep time
-#   4. Use Google's Custom Search API
-#   5. Use Bing instead
-driver_path = ChromeDriverManager().install()
-options = uc.ChromeOptions()
-options.add_argument("--headless")
-options.add_argument("--disable-blink-features=AutomationControlled")
-driver = uc.Chrome(driver_executable_path=driver_path, options=options)
 
-
-def google_search(query: str, num_results: int = 10) -> List[str]:
+def google_search(query: str, num_results: int = 100) -> List[str]:
     """
-    Perform a Google search and return the list of result URLs.
+    Search using the Google Custom Search API and return result URLs.
 
     Args:
         query (str): The search query to perform.
         num (int): The number of results to return (default 100).
 
     Returns:
-        List[str]: A list of URLs from the search results.
+        List[str]: A list of normalized result URLs.
     """
-    search_url = f"https://www.google.com/search?q={query}&num={num_results}"
-    driver.get(search_url)
+    API_KEY = os.getenv("GOOGLE_API_KEY")
+    SEARCH_ENGINE_ID = os.getenv("GOOGLE_CSE_ID")
 
-    time.sleep(3)  # Allow time for JavaScript to execute
-    soup = BeautifulSoup(driver.page_source, "html.parser")
-    driver.quit()
+    if not API_KEY or not SEARCH_ENGINE_ID:
+        logging.error("Google API key or search engine ID not found.")
+        raise EnvironmentError(
+            "Missing GOOGLE_API_KEY or GOOGLE_CSE_ID environment variables. "
+            + "Did you put them in your .env file?"
+        )
 
-    search_results = []
-    for g in soup.find_all("div", class_="g"):
-        anchor = g.find("a")
-        if anchor:
-            link = anchor["href"]
-            search_results.append(normalize_url(link))
+    results = []
+    start = 1
 
-    if not search_results:
-        logging.error("No search results found. Maybe bot detection?")
+    while len(results) < num_results and start < 100:
+        params = {
+            "key": API_KEY,
+            "cx": SEARCH_ENGINE_ID,
+            "q": query,
+            "start": start,
+            "num": min(10, num_results - len(results)),
+        }
 
-    return search_results
+        response = requests.get(
+            "https://www.googleapis.com/customsearch/v1", params=params
+        )
+
+        if response.status_code != 200:
+            logging.error(
+                f"Google API error: {response.status_code} - {response.text}"
+            )
+            break
+
+        data = response.json()
+        if "items" not in data:
+            logging.error(f"No search results found: {data}")
+            break
+
+        for item in data["items"]:
+            link = item["link"]
+            results.append(normalize_url(link))
+
+        if "nextPage" not in data.get("queries", {}):
+            break
+
+        start += 10
+
+    return results
 
 
 def normalize_url(url: str) -> str:
@@ -467,6 +488,17 @@ def scrape_glassdoor_data(company_name: str) -> Dict:
         Dict: A dictionary containing the Glassdoor data.
 
     """
+    # Set up Chrome options to run headless
+    options = Options()
+    # options.add_argument("--headless")  # Uncomment to run headless
+    options.add_argument("--disable-gpu")
+    options.add_argument("--no-sandbox")
+    options.add_argument("user-agent=Mozilla/5.0")
+
+    driver = webdriver.Chrome(
+        service=Service(ChromeDriverManager().install()), options=options
+    )
+
     try:
         # Search for the company on Glassdoor
         search_url = (
@@ -622,7 +654,7 @@ if __name__ == "__main__":
         "(intitle:engineer OR intitle:software OR intitle:python OR "
         "intitle:developer OR intitle:data) "
         '(python OR backend OR ml OR "machine learning") '
-        "site:lever.co OR site:greenhouse.io "
+        # "site:lever.co OR site:greenhouse.io "
         "-intitle:staff -intitle:senior -intitle:manager -intitle:lead "
         "-intitle:principal -intitle:director "
         '"Remote"'
@@ -630,13 +662,12 @@ if __name__ == "__main__":
 
     results = google_search(query)
     logging.info(f"Found {len(results)} job postings.")
-    i = 1
+
     existing_urls = load_existing_urls()
 
-    for url in results:
+    for i, url in enumerate(results, 1):
         url = normalize_url(url)
         logging.info(f"Processing job {i}/{len(results)}: {url}")
-        i += 1
 
         if url in existing_urls:
             logging.info(f"  Skipping duplicate job: {url}.")

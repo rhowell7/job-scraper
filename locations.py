@@ -22,7 +22,7 @@ allow_locales = [
 ]
 
 exclude_locales = [
-    "apac", "argentina", "brazil", "buenos", "aires", "bulgaria",
+    "apac", "argentina", "brazil", "buenos", "aires", "belgrade", "bulgaria",
     "canada", "casablanca", "chile", "colombia", "czech republic",
     "cyprus", "emea", "europe", "france", "germany", "hungary", "india",
     "ireland", "italy", "latam", "lisbon", "london", "mexico", "morocco",

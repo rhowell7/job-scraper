@@ -16,3 +16,7 @@ def test_parse_company_size():
     assert result == "5000-10000"
     result = parse_company_size("10K+ Employees")
     assert result == "10000+"
+    result = parse_company_size("Unknown size")
+    assert result == "Unknown size"
+    result = parse_company_size(None)
+    assert result == "unknown"

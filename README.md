@@ -33,18 +33,30 @@ Job Scraper is a lightweight Python-based tool designed to scrape job listings f
     source venv/bin/activate  # `deactivate` when finished
     pip install -r requirements.txt
     ```
-3. Run the scraper:
+
+3. Copy the example environment file and add your API key and Custom Search Engine ID:
+    ```sh
+    cp .env.example .env
+    ```
+    Then open `.env` in your editor and fill in:
+    - `GOOGLE_API_KEY`: Your [Google API key](https://console.cloud.google.com/apis/credentials)
+    - `GOOGLE_CSE_ID`: Your [Google Custom Search Engine ID (cx)](https://programmablesearchengine.google.com/controlpanel/all)
+
+    > Tip: You must enable the "Custom Search API" for your Google Cloud project in the [API Library](https://console.cloud.google.com/apis/library). This project assumes the search sites are limited to Greenhouse and Lever.
+![alt text](image.png)
+
+4. Run the scraper:
     ```sh
     python main.py
     ```
-4. View the results in `job_results.csv`. View logs in `logs/job_scraper.log`.
+5. View the results in `job_results.csv`. View logs in `logs/job_scraper.log`.
 
 
 ### Configuration
 
-If you wish to modify the search query, edit the `query` parameters in `main.py:616-630`.
+If you wish to modify the search query, edit the `query` parameters in `main.py:698-706`.
 
-If you wish to customize the ranking system, edit the preferences dictionary (`main.py:36-49`) to adjust scoring based on keywords.
+If you wish to customize the ranking system, edit the preferences dictionary (`main.py:39-52`) to adjust scoring based on keywords.
 
 
 ### Data Storage
@@ -101,13 +113,8 @@ __Testing Notes:__
 If you've scraped additional job data or improved the scraper in some way, please submit a pull request! To add your results to the repo:
 
 1. Run the scraper to collect job listings.
-2. Commit your changes and submit a pull request.
-3. Please make sure `tox` passes all tests before submitting.
-
-
-### How to Avoid Rate Limits
-
-You may run into rate limiting. If this happens, you can tweak the scraper’s behavior to avoid too many requests in a short period, such as adding a `time.sleep()` between requests.
+2. Please make sure `tox` passes all tests before submitting.
+3. Commit your changes and submit a pull request.
 
 
 ## Roadmap
