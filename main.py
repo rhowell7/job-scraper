@@ -500,64 +500,151 @@ def scrape_glassdoor_data(company_name: str) -> Dict:
     )
 
     try:
-        # Search for the company on Glassdoor
         search_url = (
             "https://www.glassdoor.com/Search/results.htm?"
             f"keyword={company_name.replace(' ', '%20')}"
         )
         driver.get(search_url)
         time.sleep(2)
-        # Pre-set variables to N/A
+
         rating = "N/A"
         reviews = "N/A"
         company_size = "unknown"
         glassdoor_url = "unknown"
 
         try:
-            first_company_tile = driver.find_element(By.CLASS_NAME, "company-tile")
-
-            # Extract the Glassdoor rating
+            # FIRST: Try old layout
             try:
-                rating = (
-                    first_company_tile.find_element(
-                        By.CSS_SELECTOR, "strong.small.css-b63kyi"
+                first_tile = driver.find_element(By.CLASS_NAME, "company-tile")
+
+                # Rating
+                try:
+                    rating = (
+                        first_tile.find_element(
+                            By.CSS_SELECTOR, "strong.small.css-b63kyi"
+                        )
+                        .text.strip()
+                        .replace(" ★", "")
                     )
-                    .text.strip()
-                    .replace(" ★", "")
-                )
+                except Exception:
+                    logging.warning(
+                        "  No glassdoor rating found in old layout for "
+                        f"{company_name}"
+                    )
+
+                # Reviews
+                try:
+                    reviews_span = first_tile.find_elements(
+                        By.XPATH, ".//span[contains(text(),'Reviews')]"
+                    )[0]
+                    reviews = reviews_span.find_element(
+                        By.XPATH, "./preceding-sibling::span"
+                    ).text.strip()
+
+                    # Might say 1K or 2K, convert to 1000 or 2000
+                    if "K" in reviews:
+                        reviews = reviews.replace("K", "000")
+                except Exception:
+                    logging.warning(
+                        "  No glassdoor reviews found in old layout for "
+                        f"{company_name}"
+                    )
+
+                # Size
+                try:
+                    company_size_text = first_tile.find_element(
+                        By.XPATH, ".//span[contains(text(),'Employees')]"
+                    ).text.strip()
+                    company_size = parse_company_size(company_size_text)
+                except Exception:
+                    logging.warning(
+                        "  No company size found in old layout for "
+                        f"{company_name}"
+                    )
+
+                # URL
+                try:
+                    glassdoor_url = first_tile.get_attribute("href")
+                except Exception:
+                    logging.warning(
+                        "  No glassdoor URL found in old layout for "
+                        f"{company_name}"
+                    )
+
             except Exception:
-                logging.warning(f"  No glassdoor rating found for {company_name}")
+                # OLD layout not found — try fallback: NEW layout (company-card)
+                try:
+                    cards = driver.find_elements(
+                        By.CSS_SELECTOR, "div[data-test='company-card']"
+                    )
+                    for card in cards:
+                        try:
+                            name_el = card.find_element(
+                                By.CLASS_NAME, "employer-card_employerName__YXH4h"
+                            )
+                            if (
+                                company_name.lower()
+                                not in name_el.text.strip().lower()
+                            ):
+                                continue
 
-            # Extract the number of reviews
-            try:
-                reviews_span = first_company_tile.find_elements(
-                    By.XPATH, ".//span[contains(text(),'Reviews')]"
-                )[0]
-                reviews = reviews_span.find_element(
-                    By.XPATH, "./preceding-sibling::span"
-                ).text.strip()
+                            # Rating
+                            try:
+                                rating = (
+                                    card.find_element(
+                                        By.CLASS_NAME,
+                                        "employer-card_employerRatingContainer__2pK6W",  # noqa
+                                    )
+                                    .text.split("★")[0]
+                                    .strip()
+                                )
+                            except Exception:
+                                logging.warning(
+                                    "No rating found in new layout for "
+                                    f"{company_name}"
+                                )
 
-                # Might say 1K or 2K, convert to 1000 or 2000
-                if "K" in reviews:
-                    reviews = reviews.replace("K", "000")
+                            # Reviews
+                            try:
+                                reviews_span = card.find_elements(
+                                    By.XPATH,
+                                    ".//span[contains(text(), 'reviews')]/preceding-sibling::span",  # noqa
+                                )
+                                if reviews_span:
+                                    reviews = (
+                                        reviews_span[0]
+                                        .text.strip()
+                                        .replace("K", "000")
+                                    )
+                            except Exception:
+                                logging.warning(
+                                    "No reviews found in new layout for "
+                                    f"{company_name}"
+                                )
 
-            except Exception:
-                logging.warning(f"  No glassdoor reviews found for {company_name}")
+                            # URL
+                            try:
+                                href = card.find_element(
+                                    By.TAG_NAME, "a"
+                                ).get_attribute("href")
+                                glassdoor_url = (
+                                    f"https://www.glassdoor.com{href}"
+                                    if href.startswith("/")
+                                    else href
+                                )
+                            except Exception:
+                                logging.warning(
+                                    "No URL found in new layout for "
+                                    f"{company_name}"
+                                )
 
-            # Extract the company size
-            try:
-                company_size_text = first_company_tile.find_element(
-                    By.XPATH, ".//span[contains(text(),'Employees')]"
-                ).text.strip()
-                company_size = parse_company_size(company_size_text)
-            except Exception:
-                logging.warning(f"  No company size found for {company_name}")
+                            break  # done if match found
 
-            # Extract the Glassdoor URL for the company
-            try:
-                glassdoor_url = first_company_tile.get_attribute("href")
-            except Exception:
-                logging.warning(f"  No glassdoor URL found for {company_name}")
+                        except Exception:
+                            continue
+
+                except Exception:
+                    return {"error": f"No company data found for {company_name}"}
 
         except Exception:
             return {"error": f"No company data found for {company_name}"}
