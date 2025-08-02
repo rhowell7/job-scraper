@@ -17,7 +17,7 @@ Job Scraper is a lightweight Python-based tool designed to scrape job listings f
 
 ### Prerequisites
 
-- Python 3.7+
+- Python 3.7 - 3.12 (3.13 not yet supported)
 - Required Python packages (see `requirements.txt`)
 
 ### Installation
