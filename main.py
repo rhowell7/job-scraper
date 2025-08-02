@@ -411,7 +411,7 @@ def save_glassdoor_data_to_csv(company_name: str, glassdoor_data: Dict):
     file_exists = os.path.isfile("glassdoor_data.csv")
 
     with open("glassdoor_data.csv", mode="a", newline="") as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames, lineterminator="\n")
         if not file_exists:
             writer.writeheader()
         writer.writerow(

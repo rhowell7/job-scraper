@@ -34,7 +34,6 @@ MixMode,4.6,"https://www.glassdoor.com/Overview/Working-at-MixMode-EI_IE7679907.
 Osmosis,4.1,"https://www.glassdoor.com/Overview/Working-at-Osmosis-EI_IE1327058.11,18.htm",92,51-200
 LaunchDarkly,3.8,"https://www.glassdoor.com/Overview/Working-at-LaunchDarkly-EI_IE1897319.11,23.htm",128,501-1000
 Dataiku,3.4,"https://www.glassdoor.com/Overview/Working-at-Dataiku-EI_IE1037713.11,18.htm",580,1000-5000
-Bioptimus,N/A,unknown,N/A,unknown
 Vimeo,3.6,"https://www.glassdoor.com/Overview/Working-at-Vimeo-EI_IE563760.11,16.htm",351,1000-5000
 Canopy Connect,5.0,"https://www.glassdoor.com/Overview/Working-at-Canopy-Connect-EI_IE5927408.11,25.htm",7,1-50
 Supermove,4.3,"https://www.glassdoor.com/Overview/Working-at-Supermove-EI_IE3215190.11,20.htm",15,1-50
@@ -111,7 +110,6 @@ Meroxa,5.0,"https://www.glassdoor.com/Overview/Working-at-Meroxa-EI_IE7685831.11
 Palantir Technologies,308,"https://www.glassdoor.com/Overview/Working-at-Palantir-Technologies-EI_IE236375.11,32.htm",845,unknown
 Latitude Inc,4.4,"https://www.glassdoor.com/Overview/Working-at-Latitude-Inc-EI_IE223597.11,23.htm",36,1-50
 Sourcescrub,4.2,"https://www.glassdoor.com/Overview/Working-at-Sourcescrub-EI_IE1876655.11,22.htm",55,51-200
-Kaiber,N/A,unknown,N/A,unknown
 Tavus,5.0,"https://www.glassdoor.com/Overview/Working-at-Tavus-EI_IE6683595.11,16.htm",4,unknown
 Stylitics,3.2,"https://www.glassdoor.com/Overview/Working-at-Stylitics-EI_IE1873109.11,20.htm",65,51-200
 Federato,4.3,"https://www.glassdoor.com/Overview/Working-at-Federato-EI_IE6809618.11,19.htm",19,1-50
@@ -120,27 +118,56 @@ Motive,4.0,"https://www.glassdoor.com/Overview/Working-at-Motive-EI_IE1018424.11
 MyShell,4.0,"https://www.glassdoor.com/Overview/Working-at-Myshell-EI_IE9350721.11,18.htm",1,1-50
 Orbital Sidekick,4.8,"https://www.glassdoor.com/Overview/Working-at-Orbital-Sidekick-EI_IE2208047.11,27.htm",8,1-50
 Clerkie,5.0,"https://www.glassdoor.com/Overview/Working-at-Clerkie-EI_IE2225218.11,18.htm",1,1-50
-Mindbloom,4.0,"https://www.glassdoor.com/Overview/Working-at-Mindbloom-EI_IE4482925.11,20.htm",85,unknown
-Udacity,3.9,"https://www.glassdoor.com/Overview/Working-at-Udacity-EI_IE659776.11,18.htm",542,unknown
+Mindbloom,4.0,"https://www.glassdoor.com/Overview/Working-at-Mindbloom-EI_IE4482925.11,20.htm",85,1-50
+Udacity,3.9,"https://www.glassdoor.com/Overview/Working-at-Udacity-EI_IE659776.11,18.htm",542,201-500
 Flip,3.3,"https://www.glassdoor.com/Overview/Working-at-Flip-EI_IE3165933.11,15.htm",25,201-500
-Scribd,2.9,"https://www.glassdoor.com/Overview/Working-at-Scribd-EI_IE354208.11,17.htm",112,unknown
-Underdog Sports,3.7,"https://www.glassdoor.com/Overview/Working-at-Underdog-Sports-Leagues-EI_IE634431.11,34.htm",15,unknown
-Altium,3.8,"https://www.glassdoor.com/Overview/Working-at-Altium-Limited-EI_IE12698.11,25.htm",240,unknown
-Enveritas,4.0,"https://www.glassdoor.com/Overview/Working-at-Enveritas-EI_IE1931595.11,20.htm",24,unknown
-Rocket Lawyer,4.1,"https://www.glassdoor.com/Overview/Working-at-Rocket-Lawyer-EI_IE556079.11,24.htm",282,unknown
-Blinkist,4.3,"https://www.glassdoor.com/Overview/Working-at-Blinkist-EI_IE1030889.11,19.htm",125,unknown
-Sporty Group,3.7,"https://www.glassdoor.com/Overview/Working-at-Sporty-Group-EI_IE4247478.11,23.htm",73,unknown
-CentML,5.0,"https://www.glassdoor.com/Overview/Working-at-CentML-EI_IE7569156.11,17.htm",3,unknown
-KnowBe4,3.6,"https://www.glassdoor.com/Overview/Working-at-KnowBe4-EI_IE969384.11,18.htm",1.4000,unknown
-Blue Rose Research,N/A,"https://www.glassdoor.com/Overview/Working-at-Blue-Rose-Research-EI_IE9347310.11,29.htm",0,unknown
-Varo Bank,3.4,"https://www.glassdoor.com/Overview/Working-at-Varo-Bank-EI_IE1280936.11,20.htm",187,unknown
-WeaveGrid,4.1,"https://www.glassdoor.com/Overview/Working-at-WeaveGrid-EI_IE8543499.11,20.htm",11,unknown
-Techie Talent,4.7,"https://www.glassdoor.com/Overview/Working-at-Techie-Talent-EI_IE8058476.11,24.htm",26,unknown
-Nex,5.0,"https://www.glassdoor.com/Overview/Working-at-Nex-EI_IE2126596.11,14.htm",1,unknown
-Gluo,4.6,"https://www.glassdoor.com/Overview/Working-at-Gluo-EI_IE2817151.11,15.htm",61,unknown
-MyFitnessPal,4.0,"https://www.glassdoor.com/Overview/Working-at-MyFitnessPal-EI_IE733704.11,23.htm",66,unknown
-Deep 6 AI,3.8,"https://www.glassdoor.com/Overview/Working-at-Deep-6-AI-EI_IE2256232.11,20.htm",28,unknown
-MinIO,3.0,"https://www.glassdoor.com/Overview/Working-at-Minio-EI_IE1714169.11,16.htm",3,unknown
-DataKind,4.4,"https://www.glassdoor.com/Overview/Working-at-DataKind-EI_IE1571359.11,19.htm",17,unknown
-Superblocks,5.0,"https://www.glassdoor.com/Overview/Working-at-Superblocks-EI_IE2294157.11,22.htm",3,unknown
-Abusix,4.0,"https://www.glassdoor.com/Overview/Working-at-Abusix-EI_IE7267417.11,17.htm",1,unknown
+Scribd,2.9,"https://www.glassdoor.com/Overview/Working-at-Scribd-EI_IE354208.11,17.htm",112,201-500
+Underdog Sports,3.7,"https://www.glassdoor.com/Overview/Working-at-Underdog-Sports-Leagues-EI_IE634431.11,34.htm",15,1-50
+Altium,3.8,"https://www.glassdoor.com/Overview/Working-at-Altium-Limited-EI_IE12698.11,25.htm",240,501-1000
+Enveritas,4.0,"https://www.glassdoor.com/Overview/Working-at-Enveritas-EI_IE1931595.11,20.htm",24,1-50
+Rocket Lawyer,4.1,"https://www.glassdoor.com/Overview/Working-at-Rocket-Lawyer-EI_IE556079.11,24.htm",282,201-500
+Blinkist,4.3,"https://www.glassdoor.com/Overview/Working-at-Blinkist-EI_IE1030889.11,19.htm",125,51-200
+Sporty Group,3.7,"https://www.glassdoor.com/Overview/Working-at-Sporty-Group-EI_IE4247478.11,23.htm",73,501-1000
+CentML,5.0,"https://www.glassdoor.com/Overview/Working-at-CentML-EI_IE7569156.11,17.htm",3,1-50
+KnowBe4,3.6,"https://www.glassdoor.com/Overview/Working-at-KnowBe4-EI_IE969384.11,18.htm",1.4000,1001-5000
+Blue Rose Research,N/A,"https://www.glassdoor.com/Overview/Working-at-Blue-Rose-Research-EI_IE9347310.11,29.htm",0,1-50
+Varo Bank,3.4,"https://www.glassdoor.com/Overview/Working-at-Varo-Bank-EI_IE1280936.11,20.htm",187,501-1000
+WeaveGrid,4.1,"https://www.glassdoor.com/Overview/Working-at-WeaveGrid-EI_IE8543499.11,20.htm",11,51-200
+Techie Talent,4.7,"https://www.glassdoor.com/Overview/Working-at-Techie-Talent-EI_IE8058476.11,24.htm",26,51-200
+Nex,5.0,"https://www.glassdoor.com/Overview/Working-at-Nex-EI_IE2126596.11,14.htm",1,51-200
+Gluo,4.6,"https://www.glassdoor.com/Overview/Working-at-Gluo-EI_IE2817151.11,15.htm",61,51-200
+MyFitnessPal,4.0,"https://www.glassdoor.com/Overview/Working-at-MyFitnessPal-EI_IE733704.11,23.htm",66,51-200
+Deep 6 AI,3.8,"https://www.glassdoor.com/Overview/Working-at-Deep-6-AI-EI_IE2256232.11,20.htm",28,51-200
+MinIO,3.0,"https://www.glassdoor.com/Overview/Working-at-Minio-EI_IE1714169.11,16.htm",3,51-200
+DataKind,4.4,"https://www.glassdoor.com/Overview/Working-at-DataKind-EI_IE1571359.11,19.htm",17,1-50
+Superblocks,5.0,"https://www.glassdoor.com/Overview/Working-at-Superblocks-EI_IE2294157.11,22.htm",3,1-50
+Abusix,4.0,"https://www.glassdoor.com/Overview/Working-at-Abusix-EI_IE7267417.11,17.htm",1,1-50
+Nift,4.6,"https://www.glassdoor.com/Overview/Working-at-Nifty-Marketing-EI_IE1928911.11,26.htm",11,1-50
+HOPPR,N/A,"https://www.glassdoor.com/Overview/Working-at-HOPPR-EI_IE10455866.11,16.htm",0,1-50
+Anagram,3.4,"https://www.glassdoor.com/Overview/Working-at-Anagram-MN-EI_IE4256612.11,21.htm",13,unknown
+Datapeople,2.6,"https://www.glassdoor.com/Overview/Working-at-Datapeople-EI_IE2418310.11,21.htm",19,1-50
+Treasury Prime,3.5,"https://www.glassdoor.com/Overview/Working-at-Treasury-Prime-EI_IE6096000.11,25.htm",14,51-200
+Ocrolus Inc.,3.5,"https://www.glassdoor.com/Overview/Working-at-Ocrolus-EI_IE2857732.11,18.htm",169,unknown
+Paradigm,3.7,"https://www.glassdoor.com/Overview/Working-at-Paradigm-EI_IE349419.11,19.htm",152,501-1000
+Future,3.2,"https://www.glassdoor.com/Overview/Working-at-Future-EI_IE350743.11,17.htm",695,1001-5000
+Plotly,4.6,"https://www.glassdoor.com/Overview/Working-at-Plotly-EI_IE1072063.11,17.htm",42,51-200
+Clarifai,3.4,"https://www.glassdoor.com/Overview/Working-at-Clarifai-EI_IE1330095.11,19.htm",141,51-200
+Huspy,4.0,"https://www.glassdoor.com/Overview/Working-at-Huspy-EI_IE5962492.11,16.htm",139,201-500
+Technergetics,4.6,"https://www.glassdoor.com/Overview/Working-at-Technergetics-EI_IE1012369.11,24.htm",5,1-50
+Eqvilent,4.5,"https://www.glassdoor.com/Overview/Working-at-Eqvilent-EI_IE9329805.11,19.htm",16,201-500
+Prolific,3.6,"https://www.glassdoor.com/Overview/Working-at-Prolific-EI_IE2887663.11,19.htm",73,51-200
+Immunefi,3.8,"https://www.glassdoor.com/Overview/Working-at-Immunefi-EI_IE7982531.11,19.htm",4,1-50
+Speechify,4.3,"https://www.glassdoor.com/Overview/Working-at-Speechify-EI_IE4178530.11,20.htm",112,51-200
+Gigster,3.5,"https://www.glassdoor.com/Overview/Working-at-Gigster-EI_IE1168400.11,18.htm",98,1-50
+Zerion,4.8,"https://www.glassdoor.com/Overview/Working-at-Zerion-EI_IE3325248.11,17.htm",6,1-50
+Cobalt,4.1,"https://www.glassdoor.com/Overview/Working-at-Cobalt-EI_IE988569.11,17.htm",44,1-50
+Nava,4.1,"https://www.glassdoor.com/Overview/Working-at-NAVA-Technology-for-Business-EI_IE2843216.11,39.htm",923,1001-5000
+SmartAsset,3.9,"https://www.glassdoor.com/Overview/Working-at-SmartAsset-EI_IE986794.11,21.htm",189,51-200
+Kano,4.7,"https://www.glassdoor.com/Overview/Working-at-Kano-EI_IE1108586.11,15.htm",35,1-50
+Buzz Solutions,3.3,"https://www.glassdoor.com/Overview/Working-at-Buzz-Solutions-EI_IE491241.11,25.htm",5,1-50
+Overstory,5.0,"https://www.glassdoor.com/Overview/Working-at-Overstory-EI_IE5896774.11,20.htm",5,1-50
+saas.group,4.9,"https://www.glassdoor.com/Overview/Working-at-SaaS-group-EI_IE4573863.11,21.htm",32,201-500
+The Voleon Group,4.6,"https://www.glassdoor.com/Overview/Working-at-Voleon-EI_IE959234.11,17.htm",126,51-200
+Loop,3.8,"https://www.glassdoor.com/Overview/Working-at-Loop-EI_IE1257316.11,15.htm",185,1-50
+Archive,4.2,"https://www.glassdoor.com/Overview/Working-at-Archive-EI_IE5514364.11,18.htm",4,1-50
+Varicent,4.1,"https://www.glassdoor.com/Overview/Working-at-Varicent-EI_IE364752.11,19.htm",204,501-1000
