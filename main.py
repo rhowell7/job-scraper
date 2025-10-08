@@ -411,7 +411,9 @@ def save_glassdoor_data_to_csv(company_name: str, glassdoor_data: Dict):
     file_exists = os.path.isfile("glassdoor_data.csv")
 
     with open("glassdoor_data.csv", mode="a", newline="") as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames, lineterminator="\n")
+        writer = csv.DictWriter(
+            csvfile, fieldnames=fieldnames, lineterminator="\n"
+        )
         if not file_exists:
             writer.writeheader()
         writer.writerow(
@@ -491,41 +493,78 @@ def scrape_glassdoor_data(company_name: str) -> Dict:
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
     options.add_argument("user-agent=Mozilla/5.0")
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+    driver = webdriver.Chrome(
+        service=Service(ChromeDriverManager().install()), options=options
+    )
 
     try:
-        rating, reviews, company_size, glassdoor_url = "N/A", "N/A", "unknown", "unknown"
-        search_url = f"https://www.glassdoor.com/Search/results.htm?keyword={company_name.replace(' ', '%20')}"
+        rating, reviews, company_size, glassdoor_url = (
+            "N/A",
+            "N/A",
+            "unknown",
+            "unknown",
+        )
+        search_url = (
+            f"https://www.glassdoor.com/Search/results.htm?keyword="
+            f"{company_name.replace(' ', '%20')}"
+        )
         driver.get(search_url)
         time.sleep(2)
 
-        cards = driver.find_elements(By.CSS_SELECTOR, "div[data-test='company-card']")
+        cards = driver.find_elements(
+            By.CSS_SELECTOR, "div[data-test='company-card']"
+        )
         if not cards:
             return {"error": f"No company data found for {company_name}"}
 
         for card in cards:
             try:
-                name_el = card.find_element(By.CLASS_NAME, "employer-card_employerName__kSwU7")
+                name_el = card.find_element(
+                    By.CLASS_NAME, "employer-card_employerName__kSwU7"
+                )
                 if company_name.lower() not in name_el.text.strip().lower():
                     continue
 
                 try:
-                    rating = card.find_element(By.CLASS_NAME, "employer-card_employerRatingContainer__w93y9").text.split("★")[0].strip()
+                    rating = (
+                        card.find_element(
+                            By.CLASS_NAME,
+                            "employer-card_employerRatingContainer__w93y9",
+                        )
+                        .text.split("★")[0]
+                        .strip()
+                    )
                 except Exception:
-                    logging.warning(f"No rating found in new layout for {company_name}")
+                    logging.warning(
+                        f"No rating found in new layout for {company_name}"
+                    )
 
                 try:
-                    reviews_span = card.find_elements(By.XPATH, ".//span[contains(text(), 'reviews')]/preceding-sibling::span")
+                    reviews_span = card.find_elements(
+                        By.XPATH,
+                        ".//span[contains(text(), 'reviews')]"
+                        "/preceding-sibling::span",
+                    )
                     if reviews_span:
                         reviews = reviews_span[0].text.strip().replace("K", "000")
                 except Exception:
-                    logging.warning(f"No reviews found in new layout for {company_name}")
+                    logging.warning(
+                        f"No reviews found in new layout for {company_name}"
+                    )
 
                 try:
-                    href = card.find_element(By.TAG_NAME, "a").get_attribute("href")
-                    glassdoor_url = f"https://www.glassdoor.com{href}" if href and href.startswith("/") else href or "unknown"
+                    href = card.find_element(
+                        By.TAG_NAME, "a"
+                    ).get_attribute("href")
+                    glassdoor_url = (
+                        f"https://www.glassdoor.com{href}"
+                        if href and href.startswith("/")
+                        else href or "unknown"
+                    )
                 except Exception:
-                    logging.warning(f"No URL found in new layout for {company_name}")
+                    logging.warning(
+                        f"No URL found in new layout for {company_name}"
+                    )
 
                 break
             except Exception:
@@ -533,7 +572,12 @@ def scrape_glassdoor_data(company_name: str) -> Dict:
 
         if rating == "N/A" and reviews == "N/A" and glassdoor_url == "unknown":
             return {"error": f"No company data found for {company_name}"}
-        return {"rating": rating, "reviews": reviews, "company_size": company_size, "glassdoor_url": glassdoor_url}
+        return {
+            "rating": rating,
+            "reviews": reviews,
+            "company_size": company_size,
+            "glassdoor_url": glassdoor_url,
+        }
     finally:
         driver.quit()
 
@@ -647,8 +691,12 @@ if __name__ == "__main__":
             )
             job_info.update(glassdoor_data)
         else:
-            glassdoor_data = scrape_glassdoor_data(job_info.get("company_name"))
-            save_glassdoor_data_to_csv(job_info.get("company_name"), glassdoor_data)
+            glassdoor_data = scrape_glassdoor_data(
+                job_info.get("company_name")
+            )
+            save_glassdoor_data_to_csv(
+                job_info.get("company_name"), glassdoor_data
+            )
             job_info.update(glassdoor_data)
 
         # If no location, save to csv and continue
